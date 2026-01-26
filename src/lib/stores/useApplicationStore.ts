@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { generateCriteriaFromIntake } from '@/lib/utils/intakeToCriteria'
 import {
   Demographics,
   CriterionType,
@@ -17,7 +18,7 @@ import {
   RecommendationResult,
   EmploymentHistoryEntry,
   EducationHistoryEntry,
-  FamilyConnectionEntry,
+  ProfessionalConnectionEntry,
 } from '@/types'
 
 const initialCriterionState: CriterionState = {
@@ -63,15 +64,16 @@ interface ApplicationStore {
   addEducationEntry: (entry: EducationHistoryEntry) => void
   updateEducationEntry: (id: string, updates: Partial<EducationHistoryEntry>) => void
   removeEducationEntry: (id: string) => void
-  addFamilyConnection: (entry: FamilyConnectionEntry) => void
-  updateFamilyConnection: (id: string, updates: Partial<FamilyConnectionEntry>) => void
-  removeFamilyConnection: (id: string) => void
+  addProfessionalConnection: (entry: ProfessionalConnectionEntry) => void
+  updateProfessionalConnection: (id: string, updates: Partial<ProfessionalConnectionEntry>) => void
+  removeProfessionalConnection: (id: string) => void
   skipRecommendations: () => void
   setRecommendations: (recommendations: RecommendationResult) => void
 
   // Utility functions
   getCompletedCriteriaCount: () => number
   getCriterionEntries: <T extends CriterionEntry>(criterionType: CriterionType) => T[]
+  populateCriteriaFromIntake: () => void
   resetApplication: () => void
 }
 
@@ -79,7 +81,7 @@ const initialIntake: IntakeData = {
   wantsRecommendations: false,
   employmentHistory: [],
   educationHistory: [],
-  familyConnections: [],
+  professionalConnections: [],
 }
 
 export const useApplicationStore = create<ApplicationStore>()(
@@ -247,38 +249,38 @@ export const useApplicationStore = create<ApplicationStore>()(
             : null,
         })),
 
-      addFamilyConnection: (entry) =>
+      addProfessionalConnection: (entry) =>
         set((state) => ({
           intake: state.intake
             ? {
                 ...state.intake,
-                familyConnections: [...state.intake.familyConnections, entry],
+                professionalConnections: [...state.intake.professionalConnections, entry],
               }
             : {
                 ...initialIntake,
                 wantsRecommendations: true,
-                familyConnections: [entry],
+                professionalConnections: [entry],
               },
         })),
 
-      updateFamilyConnection: (id, updates) =>
+      updateProfessionalConnection: (id, updates) =>
         set((state) => ({
           intake: state.intake
             ? {
                 ...state.intake,
-                familyConnections: state.intake.familyConnections.map((entry) =>
+                professionalConnections: state.intake.professionalConnections.map((entry) =>
                   entry.id === id ? { ...entry, ...updates } : entry
                 ),
               }
             : null,
         })),
 
-      removeFamilyConnection: (id) =>
+      removeProfessionalConnection: (id) =>
         set((state) => ({
           intake: state.intake
             ? {
                 ...state.intake,
-                familyConnections: state.intake.familyConnections.filter(
+                professionalConnections: state.intake.professionalConnections.filter(
                   (entry) => entry.id !== id
                 ),
               }
@@ -302,6 +304,57 @@ export const useApplicationStore = create<ApplicationStore>()(
       getCriterionEntries: <T extends CriterionEntry>(criterionType: CriterionType): T[] => {
         const { criteria } = get()
         return criteria[criterionType].entries as T[]
+      },
+
+      populateCriteriaFromIntake: () => {
+        const { intake, criteria } = get()
+        if (!intake) return
+
+        const generated = generateCriteriaFromIntake(intake)
+
+        // Only add entries if the criterion doesn't already have entries
+        const updates: Partial<Record<CriterionType, CriterionState>> = {}
+
+        if (criteria.criticalEmployment.entries.length === 0 && generated.criticalEmployment.length > 0) {
+          updates.criticalEmployment = {
+            ...criteria.criticalEmployment,
+            entries: generated.criticalEmployment,
+            isDraft: true,
+          }
+        }
+
+        if (criteria.remuneration.entries.length === 0 && generated.remuneration.length > 0) {
+          updates.remuneration = {
+            ...criteria.remuneration,
+            entries: generated.remuneration,
+            isDraft: true,
+          }
+        }
+
+        if (criteria.authorship.entries.length === 0 && generated.authorship.length > 0) {
+          updates.authorship = {
+            ...criteria.authorship,
+            entries: generated.authorship,
+            isDraft: true,
+          }
+        }
+
+        if (criteria.awards.entries.length === 0 && generated.awards.length > 0) {
+          updates.awards = {
+            ...criteria.awards,
+            entries: generated.awards,
+            isDraft: true,
+          }
+        }
+
+        if (Object.keys(updates).length > 0) {
+          set({
+            criteria: {
+              ...criteria,
+              ...updates,
+            },
+          })
+        }
       },
 
       resetApplication: () =>

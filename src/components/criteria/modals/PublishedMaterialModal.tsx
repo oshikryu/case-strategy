@@ -28,28 +28,57 @@ interface PublishedMaterialModalProps {
 const emptyEvidence: Evidence = { files: [], urls: [] }
 
 export function PublishedMaterialModal({ open, onOpenChange }: PublishedMaterialModalProps) {
-  const { criteria, addEntry, removeEntry, setCriterionComplete, setCriterionDraft } = useApplicationStore()
+  const { criteria, addEntry, updateEntry, removeEntry, setCriterionComplete, setCriterionDraft } = useApplicationStore()
   const entries = criteria.publishedMaterial.entries as PublishedMaterialEntry[]
   const criterion = getCriterionDefinition('publishedMaterial')!
   const [evidence, setEvidence] = useState<Evidence>(emptyEvidence)
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(null)
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<PublishedMaterialFormData>({
     resolver: zodResolver(publishedMaterialSchema),
   })
 
+  const handleEdit = (entry: PublishedMaterialEntry) => {
+    setEditingEntryId(entry.id)
+    setValue('publication', entry.publication)
+    setValue('title', entry.title)
+    setValue('date', entry.date)
+    setValue('url', entry.url || '')
+    setValue('circulation', entry.circulation)
+    setEvidence(entry.evidence || emptyEvidence)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingEntryId(null)
+    reset()
+    setEvidence(emptyEvidence)
+  }
+
   const onAddEntry = (data: PublishedMaterialFormData) => {
-    const entry: PublishedMaterialEntry = {
-      id: generateId(),
-      ...data,
-      url: data.url || undefined,
-      evidence: evidence.files.length > 0 || evidence.urls.length > 0 ? evidence : undefined,
+    const entryEvidence = evidence.files.length > 0 || evidence.urls.length > 0 ? evidence : undefined
+
+    if (editingEntryId) {
+      updateEntry('publishedMaterial', editingEntryId, {
+        ...data,
+        url: data.url || undefined,
+        evidence: entryEvidence,
+      })
+      setEditingEntryId(null)
+    } else {
+      const entry: PublishedMaterialEntry = {
+        id: generateId(),
+        ...data,
+        url: data.url || undefined,
+        evidence: entryEvidence,
+      }
+      addEntry('publishedMaterial', entry)
     }
-    addEntry('publishedMaterial', entry)
     reset()
     setEvidence(emptyEvidence)
   }
@@ -114,21 +143,40 @@ export function PublishedMaterialModal({ open, onOpenChange }: PublishedMaterial
                     </p>
                   )}
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveEntry(entry.id)}
-                >
-                  Remove
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEdit(entry)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveEntry(entry.id)}
+                  >
+                    Remove
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
         )}
 
         <form onSubmit={handleSubmit(onAddEntry)} className="space-y-4">
-          <h4 className="text-sm font-medium text-gray-700">Add New Published Material</h4>
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium text-gray-700">
+              {editingEntryId ? 'Edit Published Material' : 'Add New Published Material'}
+            </h4>
+            {editingEntryId && (
+              <Button type="button" variant="ghost" size="sm" onClick={handleCancelEdit}>
+                Cancel Edit
+              </Button>
+            )}
+          </div>
 
           <Input
             label="Publication Name"
@@ -172,7 +220,7 @@ export function PublishedMaterialModal({ open, onOpenChange }: PublishedMaterial
           />
 
           <Button type="submit" variant="secondary" className="w-full">
-            Add Entry
+            {editingEntryId ? 'Save Changes' : 'Add Entry'}
           </Button>
         </form>
 

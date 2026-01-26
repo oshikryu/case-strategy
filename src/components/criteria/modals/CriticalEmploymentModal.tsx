@@ -29,28 +29,58 @@ interface CriticalEmploymentModalProps {
 const emptyEvidence: Evidence = { files: [], urls: [] }
 
 export function CriticalEmploymentModal({ open, onOpenChange }: CriticalEmploymentModalProps) {
-  const { criteria, addEntry, removeEntry, setCriterionComplete, setCriterionDraft } = useApplicationStore()
+  const { criteria, addEntry, updateEntry, removeEntry, setCriterionComplete, setCriterionDraft } = useApplicationStore()
   const entries = criteria.criticalEmployment.entries as CriticalEmploymentEntry[]
   const criterion = getCriterionDefinition('criticalEmployment')!
   const [evidence, setEvidence] = useState<Evidence>(emptyEvidence)
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(null)
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<CriticalEmploymentFormData>({
     resolver: zodResolver(criticalEmploymentSchema),
   })
 
+  const handleEdit = (entry: CriticalEmploymentEntry) => {
+    setEditingEntryId(entry.id)
+    setValue('company', entry.company)
+    setValue('role', entry.role)
+    setValue('startDate', entry.startDate)
+    setValue('endDate', entry.endDate || '')
+    setValue('responsibilities', entry.responsibilities)
+    setValue('criticalNature', entry.criticalNature)
+    setEvidence(entry.evidence || emptyEvidence)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingEntryId(null)
+    reset()
+    setEvidence(emptyEvidence)
+  }
+
   const onAddEntry = (data: CriticalEmploymentFormData) => {
-    const entry: CriticalEmploymentEntry = {
-      id: generateId(),
-      ...data,
-      endDate: data.endDate || undefined,
-      evidence: evidence.files.length > 0 || evidence.urls.length > 0 ? evidence : undefined,
+    const entryEvidence = evidence.files.length > 0 || evidence.urls.length > 0 ? evidence : undefined
+
+    if (editingEntryId) {
+      updateEntry('criticalEmployment', editingEntryId, {
+        ...data,
+        endDate: data.endDate || undefined,
+        evidence: entryEvidence,
+      })
+      setEditingEntryId(null)
+    } else {
+      const entry: CriticalEmploymentEntry = {
+        id: generateId(),
+        ...data,
+        endDate: data.endDate || undefined,
+        evidence: entryEvidence,
+      }
+      addEntry('criticalEmployment', entry)
     }
-    addEntry('criticalEmployment', entry)
     reset()
     setEvidence(emptyEvidence)
   }
@@ -113,21 +143,40 @@ export function CriticalEmploymentModal({ open, onOpenChange }: CriticalEmployme
                     </p>
                   )}
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveEntry(entry.id)}
-                >
-                  Remove
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEdit(entry)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveEntry(entry.id)}
+                  >
+                    Remove
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
         )}
 
         <form onSubmit={handleSubmit(onAddEntry)} className="space-y-4">
-          <h4 className="text-sm font-medium text-gray-700">Add New Employment</h4>
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium text-gray-700">
+              {editingEntryId ? 'Edit Employment' : 'Add New Employment'}
+            </h4>
+            {editingEntryId && (
+              <Button type="button" variant="ghost" size="sm" onClick={handleCancelEdit}>
+                Cancel Edit
+              </Button>
+            )}
+          </div>
 
           <Input
             label="Company/Organization"
@@ -179,7 +228,7 @@ export function CriticalEmploymentModal({ open, onOpenChange }: CriticalEmployme
           />
 
           <Button type="submit" variant="secondary" className="w-full">
-            Add Entry
+            {editingEntryId ? 'Save Changes' : 'Add Entry'}
           </Button>
         </form>
 

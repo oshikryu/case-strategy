@@ -97,7 +97,7 @@ export function EducationHistoryForm({ onNext, onBack }: EducationHistoryFormPro
         wantsRecommendations: true,
         employmentHistory: [],
         educationHistory: [],
-        familyConnections: [],
+        professionalConnections: [],
       })
     }
     onNext()

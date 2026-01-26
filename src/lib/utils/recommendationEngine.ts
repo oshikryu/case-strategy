@@ -5,7 +5,7 @@ import {
   CriterionType,
   EmploymentHistoryEntry,
   EducationHistoryEntry,
-  FamilyConnectionEntry,
+  ProfessionalConnectionEntry,
 } from '@/types'
 
 interface ScoreAccumulator {
@@ -157,8 +157,8 @@ const processEducation = (
   }
 }
 
-const processFamilyConnections = (
-  entries: FamilyConnectionEntry[],
+const processProfessionalConnections = (
+  entries: ProfessionalConnectionEntry[],
   scores: Record<CriterionType, ScoreAccumulator>
 ): void => {
   for (const entry of entries) {
@@ -172,16 +172,16 @@ const processFamilyConnections = (
       scores.membership.evidence.push(`Request a detailed recommendation letter from ${entry.name}`)
     }
 
-    // Family in same/related field
+    // Connection in same/related field
     if (entry.fieldRelevance && entry.fieldRelevance.length > 10) {
       scores.membership.score += 5
-      scores.membership.reasons.push(`Family member ${entry.name} has relevant expertise in your field`)
+      scores.membership.reasons.push(`${entry.name} has relevant expertise in your field`)
     }
 
-    // Professional achievements of family member
+    // Professional achievements of connection
     if (entry.professionalAchievements && entry.professionalAchievements.length > 20) {
       scores.publishedMaterial.score += 5
-      scores.publishedMaterial.reasons.push(`Family network includes ${entry.name} with notable achievements`)
+      scores.publishedMaterial.reasons.push(`Professional network includes ${entry.name} with notable achievements`)
     }
   }
 }
@@ -217,7 +217,7 @@ const identifyPrimaryStrengths = (
   }
 
   // Network strengths
-  const hasReferences = intake.familyConnections.some(e => e.canProvideReference)
+  const hasReferences = intake.professionalConnections.some(e => e.canProvideReference)
   if (hasReferences) {
     strengths.push('Strong professional network with available references')
   }
@@ -231,7 +231,9 @@ export const generateRecommendations = (intake: IntakeData): RecommendationResul
   // Process all intake data
   processEmployment(intake.employmentHistory, scores)
   processEducation(intake.educationHistory, scores)
-  processFamilyConnections(intake.familyConnections, scores)
+  // Support legacy data that may have familyConnections
+  const connections = intake.professionalConnections || ((intake as unknown as Record<string, unknown>).familyConnections as ProfessionalConnectionEntry[] | undefined) || []
+  processProfessionalConnections(connections, scores)
 
   // Convert scores to recommendations and sort by score
   const recommendations: CriterionRecommendation[] = criterionTypes

@@ -105,8 +105,8 @@ export function RecommendationsIntro({ onContinue }: RecommendationsIntroProps) 
               />
             </svg>
             <div>
-              <span className="font-medium text-gray-900">Family Connections</span>
-              <p className="text-sm text-gray-600">Professional network who can support your case</p>
+              <span className="font-medium text-gray-900">Professional Connections</span>
+              <p className="text-sm text-gray-600">Contacts who can provide reference letters</p>
             </div>
           </li>
         </ul>

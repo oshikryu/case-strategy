@@ -124,7 +124,7 @@ export function EmploymentHistoryForm({ onNext, onBack }: EmploymentHistoryFormP
         wantsRecommendations: true,
         employmentHistory: [],
         educationHistory: [],
-        familyConnections: [],
+        professionalConnections: [],
       })
     }
     onNext()

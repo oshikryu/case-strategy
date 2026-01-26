@@ -6,11 +6,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button, Input, Select, TextArea } from '@/components/ui'
 import { useApplicationStore, generateId } from '@/lib/stores/useApplicationStore'
-import { FamilyConnectionEntry } from '@/types'
+import { ProfessionalConnectionEntry } from '@/types'
 import { cn } from '@/lib/utils'
 
-const familyConnectionSchema = z.object({
-  relationship: z.enum(['spouse', 'parent', 'sibling', 'child', 'other']),
+const professionalConnectionSchema = z.object({
+  relationship: z.enum(['colleague', 'mentor', 'supervisor', 'collaborator', 'client', 'other']),
   name: z.string().min(1, 'Name is required'),
   occupation: z.string().optional(),
   industry: z.string().optional(),
@@ -19,14 +19,15 @@ const familyConnectionSchema = z.object({
   fieldRelevance: z.string().optional(),
 })
 
-type FamilyConnectionFormData = z.infer<typeof familyConnectionSchema>
+type ProfessionalConnectionFormData = z.infer<typeof professionalConnectionSchema>
 
 const relationshipOptions = [
-  { value: 'spouse', label: 'Spouse/Partner' },
-  { value: 'parent', label: 'Parent' },
-  { value: 'sibling', label: 'Sibling' },
-  { value: 'child', label: 'Child' },
-  { value: 'other', label: 'Other Relative' },
+  { value: 'colleague', label: 'Colleague' },
+  { value: 'mentor', label: 'Mentor/Advisor' },
+  { value: 'supervisor', label: 'Supervisor/Manager' },
+  { value: 'collaborator', label: 'Research Collaborator' },
+  { value: 'client', label: 'Client/Partner' },
+  { value: 'other', label: 'Other' },
 ]
 
 const industryOptions = [
@@ -44,31 +45,32 @@ const industryOptions = [
   { value: 'other', label: 'Other' },
 ]
 
-export interface FamilyConnectionsFormProps {
+export interface ProfessionalConnectionsFormProps {
   onNext: () => void
   onBack: () => void
 }
 
-export function FamilyConnectionsForm({ onNext, onBack }: FamilyConnectionsFormProps) {
-  const { intake, addFamilyConnection, updateFamilyConnection, removeFamilyConnection, setIntake } = useApplicationStore()
+export function ProfessionalConnectionsForm({ onNext, onBack }: ProfessionalConnectionsFormProps) {
+  const { intake, addProfessionalConnection, updateProfessionalConnection, removeProfessionalConnection, setIntake } = useApplicationStore()
   const [isAddingEntry, setIsAddingEntry] = useState(false)
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null)
 
-  const entries = intake?.familyConnections || []
+  // Support legacy data that may have familyConnections
+  const entries = intake?.professionalConnections || ((intake as unknown as Record<string, unknown>)?.familyConnections as ProfessionalConnectionEntry[] | undefined) || []
 
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<FamilyConnectionFormData>({
-    resolver: zodResolver(familyConnectionSchema),
+  } = useForm<ProfessionalConnectionFormData>({
+    resolver: zodResolver(professionalConnectionSchema),
     defaultValues: {
       canProvideReference: false,
     },
   })
 
-  const handleEdit = (entry: FamilyConnectionEntry) => {
+  const handleEdit = (entry: ProfessionalConnectionEntry) => {
     setEditingEntryId(entry.id)
     setIsAddingEntry(true)
     reset({
@@ -82,16 +84,16 @@ export function FamilyConnectionsForm({ onNext, onBack }: FamilyConnectionsFormP
     })
   }
 
-  const onSubmit = (data: FamilyConnectionFormData) => {
+  const onSubmit = (data: ProfessionalConnectionFormData) => {
     if (editingEntryId) {
-      updateFamilyConnection(editingEntryId, data)
+      updateProfessionalConnection(editingEntryId, data)
       setEditingEntryId(null)
     } else {
-      const entry: FamilyConnectionEntry = {
+      const entry: ProfessionalConnectionEntry = {
         id: generateId(),
         ...data,
       }
-      addFamilyConnection(entry)
+      addProfessionalConnection(entry)
     }
     reset()
     setIsAddingEntry(false)
@@ -109,7 +111,7 @@ export function FamilyConnectionsForm({ onNext, onBack }: FamilyConnectionsFormP
         wantsRecommendations: true,
         employmentHistory: [],
         educationHistory: [],
-        familyConnections: [],
+        professionalConnections: [],
       })
     }
     onNext()
@@ -123,9 +125,9 @@ export function FamilyConnectionsForm({ onNext, onBack }: FamilyConnectionsFormP
   return (
     <div className="max-w-3xl mx-auto">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Family Connections</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Professional Connections</h2>
         <p className="text-gray-600">
-          Add family members who could provide professional references or have relevant expertise.
+          Add professional contacts who could provide reference letters or have relevant expertise.
           This is optional but can strengthen your case.
         </p>
       </div>
@@ -167,7 +169,7 @@ export function FamilyConnectionsForm({ onNext, onBack }: FamilyConnectionsFormP
                   </svg>
                 </button>
                 <button
-                  onClick={() => removeFamilyConnection(entry.id)}
+                  onClick={() => removeProfessionalConnection(entry.id)}
                   className="text-gray-400 hover:text-red-500 transition-colors"
                   title="Delete"
                 >
@@ -276,7 +278,7 @@ export function FamilyConnectionsForm({ onNext, onBack }: FamilyConnectionsFormP
               d="M12 6v6m0 0v6m0-6h6m-6 0H6"
             />
           </svg>
-          <span className="text-gray-600">Add Family Connection</span>
+          <span className="text-gray-600">Add Professional Connection</span>
         </button>
       )}
 
@@ -291,7 +293,7 @@ export function FamilyConnectionsForm({ onNext, onBack }: FamilyConnectionsFormP
       </div>
 
       <p className="mt-4 text-center text-sm text-gray-500">
-        This step is optional. Family members with professional accomplishments can strengthen reference letters.
+        This step is optional. Professional contacts with relevant expertise can strengthen your application.
       </p>
     </div>
   )

@@ -8,14 +8,14 @@ import {
   RecommendationsIntro,
   EmploymentHistoryForm,
   EducationHistoryForm,
-  FamilyConnectionsForm,
+  ProfessionalConnectionsForm,
   RecommendationResults,
 } from '@/components/recommendations'
 
-type Step = 'intro' | 'employment' | 'education' | 'family' | 'results'
+type Step = 'intro' | 'employment' | 'education' | 'connections' | 'results'
 
-const stepOrder: Step[] = ['intro', 'employment', 'education', 'family', 'results']
-const stepLabels = ['Intro', 'Employment', 'Education', 'Family', 'Results']
+const stepOrder: Step[] = ['intro', 'employment', 'education', 'connections', 'results']
+const stepLabels = ['Intro', 'Employment', 'Education', 'Connections', 'Results']
 
 export default function RecommendationsPage() {
   const router = useRouter()
@@ -76,8 +76,8 @@ export default function RecommendationsPage() {
         return <EmploymentHistoryForm onNext={goToNext} onBack={goToPrevious} />
       case 'education':
         return <EducationHistoryForm onNext={goToNext} onBack={goToPrevious} />
-      case 'family':
-        return <FamilyConnectionsForm onNext={goToNext} onBack={goToPrevious} />
+      case 'connections':
+        return <ProfessionalConnectionsForm onNext={goToNext} onBack={goToPrevious} />
       case 'results':
         return <RecommendationResults onBack={goToPrevious} />
       default:

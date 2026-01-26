@@ -29,28 +29,58 @@ interface JudgingModalProps {
 const emptyEvidence: Evidence = { files: [], urls: [] }
 
 export function JudgingModal({ open, onOpenChange }: JudgingModalProps) {
-  const { criteria, addEntry, removeEntry, setCriterionComplete, setCriterionDraft } = useApplicationStore()
+  const { criteria, addEntry, updateEntry, removeEntry, setCriterionComplete, setCriterionDraft } = useApplicationStore()
   const entries = criteria.judging.entries as JudgingEntry[]
   const criterion = getCriterionDefinition('judging')!
   const [evidence, setEvidence] = useState<Evidence>(emptyEvidence)
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(null)
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<JudgingFormData>({
     resolver: zodResolver(judgingSchema),
   })
 
+  const handleEdit = (entry: JudgingEntry) => {
+    setEditingEntryId(entry.id)
+    setValue('organization', entry.organization)
+    setValue('role', entry.role)
+    setValue('startDate', entry.startDate)
+    setValue('endDate', entry.endDate || '')
+    setValue('context', entry.context)
+    setValue('submissionsCount', entry.submissionsCount)
+    setEvidence(entry.evidence || emptyEvidence)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingEntryId(null)
+    reset()
+    setEvidence(emptyEvidence)
+  }
+
   const onAddEntry = (data: JudgingFormData) => {
-    const entry: JudgingEntry = {
-      id: generateId(),
-      ...data,
-      endDate: data.endDate || undefined,
-      evidence: evidence.files.length > 0 || evidence.urls.length > 0 ? evidence : undefined,
+    const entryEvidence = evidence.files.length > 0 || evidence.urls.length > 0 ? evidence : undefined
+
+    if (editingEntryId) {
+      updateEntry('judging', editingEntryId, {
+        ...data,
+        endDate: data.endDate || undefined,
+        evidence: entryEvidence,
+      })
+      setEditingEntryId(null)
+    } else {
+      const entry: JudgingEntry = {
+        id: generateId(),
+        ...data,
+        endDate: data.endDate || undefined,
+        evidence: entryEvidence,
+      }
+      addEntry('judging', entry)
     }
-    addEntry('judging', entry)
     reset()
     setEvidence(emptyEvidence)
   }
@@ -113,21 +143,40 @@ export function JudgingModal({ open, onOpenChange }: JudgingModalProps) {
                     </p>
                   )}
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveEntry(entry.id)}
-                >
-                  Remove
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEdit(entry)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveEntry(entry.id)}
+                  >
+                    Remove
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
         )}
 
         <form onSubmit={handleSubmit(onAddEntry)} className="space-y-4">
-          <h4 className="text-sm font-medium text-gray-700">Add New Judging Experience</h4>
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium text-gray-700">
+              {editingEntryId ? 'Edit Judging Experience' : 'Add New Judging Experience'}
+            </h4>
+            {editingEntryId && (
+              <Button type="button" variant="ghost" size="sm" onClick={handleCancelEdit}>
+                Cancel Edit
+              </Button>
+            )}
+          </div>
 
           <Input
             label="Organization/Event"
@@ -180,7 +229,7 @@ export function JudgingModal({ open, onOpenChange }: JudgingModalProps) {
           />
 
           <Button type="submit" variant="secondary" className="w-full">
-            Add Entry
+            {editingEntryId ? 'Save Changes' : 'Add Entry'}
           </Button>
         </form>
 

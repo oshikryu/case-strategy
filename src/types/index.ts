@@ -234,10 +234,10 @@ export interface EducationHistoryEntry {
   advisorNotable?: boolean
 }
 
-// Family Connections (Professional Network Focus)
-export interface FamilyConnectionEntry {
+// Professional Connections
+export interface ProfessionalConnectionEntry {
   id: string
-  relationship: 'spouse' | 'parent' | 'sibling' | 'child' | 'other'
+  relationship: 'colleague' | 'mentor' | 'supervisor' | 'collaborator' | 'client' | 'other'
   name: string
   occupation?: string
   industry?: string
@@ -251,7 +251,7 @@ export interface IntakeData {
   wantsRecommendations: boolean
   employmentHistory: EmploymentHistoryEntry[]
   educationHistory: EducationHistoryEntry[]
-  familyConnections: FamilyConnectionEntry[]
+  professionalConnections: ProfessionalConnectionEntry[]
   completedAt?: string
 }
 

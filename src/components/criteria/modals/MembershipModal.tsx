@@ -35,27 +35,55 @@ const statusOptions = [
 const emptyEvidence: Evidence = { files: [], urls: [] }
 
 export function MembershipModal({ open, onOpenChange }: MembershipModalProps) {
-  const { criteria, addEntry, removeEntry, setCriterionComplete, setCriterionDraft } = useApplicationStore()
+  const { criteria, addEntry, updateEntry, removeEntry, setCriterionComplete, setCriterionDraft } = useApplicationStore()
   const entries = criteria.membership.entries as MembershipEntry[]
   const criterion = getCriterionDefinition('membership')!
   const [evidence, setEvidence] = useState<Evidence>(emptyEvidence)
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(null)
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<MembershipFormData>({
     resolver: zodResolver(membershipSchema),
   })
 
+  const handleEdit = (entry: MembershipEntry) => {
+    setEditingEntryId(entry.id)
+    setValue('organization', entry.organization)
+    setValue('requirements', entry.requirements)
+    setValue('dateJoined', entry.dateJoined)
+    setValue('status', entry.status)
+    setValue('achievements', entry.achievements)
+    setEvidence(entry.evidence || emptyEvidence)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingEntryId(null)
+    reset()
+    setEvidence(emptyEvidence)
+  }
+
   const onAddEntry = (data: MembershipFormData) => {
-    const entry: MembershipEntry = {
-      id: generateId(),
-      ...data,
-      evidence: evidence.files.length > 0 || evidence.urls.length > 0 ? evidence : undefined,
+    const entryEvidence = evidence.files.length > 0 || evidence.urls.length > 0 ? evidence : undefined
+
+    if (editingEntryId) {
+      updateEntry('membership', editingEntryId, {
+        ...data,
+        evidence: entryEvidence,
+      })
+      setEditingEntryId(null)
+    } else {
+      const entry: MembershipEntry = {
+        id: generateId(),
+        ...data,
+        evidence: entryEvidence,
+      }
+      addEntry('membership', entry)
     }
-    addEntry('membership', entry)
     reset()
     setEvidence(emptyEvidence)
   }
@@ -116,21 +144,40 @@ export function MembershipModal({ open, onOpenChange }: MembershipModalProps) {
                     </p>
                   )}
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveEntry(entry.id)}
-                >
-                  Remove
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEdit(entry)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveEntry(entry.id)}
+                  >
+                    Remove
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
         )}
 
         <form onSubmit={handleSubmit(onAddEntry)} className="space-y-4">
-          <h4 className="text-sm font-medium text-gray-700">Add New Membership</h4>
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium text-gray-700">
+              {editingEntryId ? 'Edit Membership' : 'Add New Membership'}
+            </h4>
+            {editingEntryId && (
+              <Button type="button" variant="ghost" size="sm" onClick={handleCancelEdit}>
+                Cancel Edit
+              </Button>
+            )}
+          </div>
 
           <Input
             label="Organization Name"
@@ -175,7 +222,7 @@ export function MembershipModal({ open, onOpenChange }: MembershipModalProps) {
           />
 
           <Button type="submit" variant="secondary" className="w-full">
-            Add Entry
+            {editingEntryId ? 'Save Changes' : 'Add Entry'}
           </Button>
         </form>
 

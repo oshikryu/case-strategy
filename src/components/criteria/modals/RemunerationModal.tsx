@@ -40,15 +40,17 @@ const currencyOptions = [
 const emptyEvidence: Evidence = { files: [], urls: [] }
 
 export function RemunerationModal({ open, onOpenChange }: RemunerationModalProps) {
-  const { criteria, addEntry, removeEntry, setCriterionComplete, setCriterionDraft } = useApplicationStore()
+  const { criteria, addEntry, updateEntry, removeEntry, setCriterionComplete, setCriterionDraft } = useApplicationStore()
   const entries = criteria.remuneration.entries as RemunerationEntry[]
   const criterion = getCriterionDefinition('remuneration')!
   const [evidence, setEvidence] = useState<Evidence>(emptyEvidence)
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(null)
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<RemunerationFormData>({
     resolver: zodResolver(remunerationSchema),
@@ -58,13 +60,40 @@ export function RemunerationModal({ open, onOpenChange }: RemunerationModalProps
     },
   })
 
+  const handleEdit = (entry: RemunerationEntry) => {
+    setEditingEntryId(entry.id)
+    setValue('company', entry.company)
+    setValue('position', entry.position)
+    setValue('salary', entry.salary)
+    setValue('currency', entry.currency)
+    setValue('year', entry.year)
+    setValue('comparativeData', entry.comparativeData)
+    setEvidence(entry.evidence || emptyEvidence)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingEntryId(null)
+    reset()
+    setEvidence(emptyEvidence)
+  }
+
   const onAddEntry = (data: RemunerationFormData) => {
-    const entry: RemunerationEntry = {
-      id: generateId(),
-      ...data,
-      evidence: evidence.files.length > 0 || evidence.urls.length > 0 ? evidence : undefined,
+    const entryEvidence = evidence.files.length > 0 || evidence.urls.length > 0 ? evidence : undefined
+
+    if (editingEntryId) {
+      updateEntry('remuneration', editingEntryId, {
+        ...data,
+        evidence: entryEvidence,
+      })
+      setEditingEntryId(null)
+    } else {
+      const entry: RemunerationEntry = {
+        id: generateId(),
+        ...data,
+        evidence: entryEvidence,
+      }
+      addEntry('remuneration', entry)
     }
-    addEntry('remuneration', entry)
     reset()
     setEvidence(emptyEvidence)
   }
@@ -134,21 +163,40 @@ export function RemunerationModal({ open, onOpenChange }: RemunerationModalProps
                     </p>
                   )}
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveEntry(entry.id)}
-                >
-                  Remove
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEdit(entry)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveEntry(entry.id)}
+                  >
+                    Remove
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
         )}
 
         <form onSubmit={handleSubmit(onAddEntry)} className="space-y-4">
-          <h4 className="text-sm font-medium text-gray-700">Add New Remuneration</h4>
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium text-gray-700">
+              {editingEntryId ? 'Edit Remuneration' : 'Add New Remuneration'}
+            </h4>
+            {editingEntryId && (
+              <Button type="button" variant="ghost" size="sm" onClick={handleCancelEdit}>
+                Cancel Edit
+              </Button>
+            )}
+          </div>
 
           <Input
             label="Company/Organization"
@@ -204,7 +252,7 @@ export function RemunerationModal({ open, onOpenChange }: RemunerationModalProps
           />
 
           <Button type="submit" variant="secondary" className="w-full">
-            Add Entry
+            {editingEntryId ? 'Save Changes' : 'Add Entry'}
           </Button>
         </form>
 

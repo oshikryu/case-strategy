@@ -14,7 +14,7 @@ export interface RecommendationResultsProps {
 
 export function RecommendationResults({ onBack }: RecommendationResultsProps) {
   const router = useRouter()
-  const { intake, setRecommendations } = useApplicationStore()
+  const { intake, setRecommendations, populateCriteriaFromIntake } = useApplicationStore()
   const [showLoading, setShowLoading] = useState(true)
 
   // Generate recommendations synchronously based on current intake
@@ -23,7 +23,7 @@ export function RecommendationResults({ onBack }: RecommendationResultsProps) {
       wantsRecommendations: true,
       employmentHistory: [],
       educationHistory: [],
-      familyConnections: [],
+      professionalConnections: [],
     }
     return generateRecommendations(intakeData)
   }, [intake])
@@ -41,6 +41,8 @@ export function RecommendationResults({ onBack }: RecommendationResultsProps) {
   }, [currentRecommendations, setRecommendations])
 
   const handleContinue = () => {
+    // Pre-fill criteria entries based on intake data
+    populateCriteriaFromIntake()
     router.push('/criteria')
   }
 
