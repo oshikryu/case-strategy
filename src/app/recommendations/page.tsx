@@ -86,7 +86,7 @@ export default function RecommendationsPage() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         {/* Only show step indicator for form steps, not intro */}
         {currentStep !== 'intro' && (

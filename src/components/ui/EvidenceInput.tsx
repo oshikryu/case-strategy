@@ -2,12 +2,13 @@
 
 import { useState, useRef, ChangeEvent } from 'react'
 import { cn } from '@/lib/utils'
-import { Evidence, EvidenceFile, EvidenceUrl } from '@/types'
+import { compressImage } from '@/lib/utils/imageHelpers'
+import { Evidence, EvidenceFile } from '@/types'
 import { Button } from './Button'
 import { Input } from './Input'
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB per file
-const MAX_TOTAL_SIZE = 50 * 1024 * 1024 // 50MB total
+const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB per file (reduced for localStorage)
+const MAX_TOTAL_SIZE = 10 * 1024 * 1024 // 10MB total (reduced for localStorage)
 
 export interface EvidenceInputProps {
   value: Evidence
@@ -59,22 +60,31 @@ export function EvidenceInput({
 
     for (const file of files) {
       if (file.size > MAX_FILE_SIZE) {
-        setError(`File "${file.name}" exceeds 10MB limit`)
+        setError(`File "${file.name}" exceeds 2MB limit`)
         continue
       }
 
       if (totalFileSize + file.size > MAX_TOTAL_SIZE) {
-        setError('Total file size would exceed 50MB limit')
+        setError('Total file size would exceed 10MB limit')
         break
       }
 
       try {
-        const base64 = await fileToBase64(file)
+        let base64 = await fileToBase64(file)
+        let finalSize = file.size
+
+        // Compress images to reduce storage size
+        if (file.type.startsWith('image/')) {
+          base64 = await compressImage(base64, 1200, 1200, 0.8)
+          // Estimate compressed size (base64 is ~33% larger than binary)
+          finalSize = Math.round((base64.length * 3) / 4)
+        }
+
         newFiles.push({
           id: generateId(),
           name: file.name,
           type: file.type,
-          size: file.size,
+          size: finalSize,
           data: base64,
         })
       } catch {
@@ -210,7 +220,7 @@ export function EvidenceInput({
             </button>
           </p>
           <p className="text-xs text-gray-500">
-            PDF, Word, Excel, Images up to 10MB each (50MB total)
+            PDF, Word, Excel, Images up to 2MB each (10MB total)
           </p>
         </div>
       </div>
@@ -251,7 +261,7 @@ export function EvidenceInput({
             ))}
           </div>
           <p className="text-xs text-gray-500">
-            Total: {formatFileSize(totalFileSize)} / 50MB
+            Total: {formatFileSize(totalFileSize)} / 10MB
           </p>
         </div>
       )}

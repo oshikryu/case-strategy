@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -40,6 +40,13 @@ export function MembershipModal({ open, onOpenChange }: MembershipModalProps) {
   const criterion = getCriterionDefinition('membership')!
   const [evidence, setEvidence] = useState<Evidence>(emptyEvidence)
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+
+  useEffect(() => {
+    if (editingEntryId && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [editingEntryId])
 
   const {
     register,
@@ -129,45 +136,60 @@ export function MembershipModal({ open, onOpenChange }: MembershipModalProps) {
         {entries.length > 0 && (
           <div className="space-y-3">
             <h4 className="text-sm font-medium text-gray-700">Your Entries ({entries.length})</h4>
-            {entries.map((entry) => (
-              <div
-                key={entry.id}
-                className="flex items-start justify-between p-3 bg-gray-50 rounded-lg"
-              >
-                <div>
-                  <p className="font-medium text-gray-900">{entry.organization}</p>
-                  <p className="text-sm text-gray-600">Joined: {entry.dateJoined}</p>
-                  <p className="text-xs text-gray-500 mt-1 capitalize">{entry.status}</p>
-                  {getEvidenceCount(entry) > 0 && (
-                    <p className="text-xs text-blue-600 mt-1">
-                      📎 {getEvidenceCount(entry)} evidence item(s)
-                    </p>
-                  )}
+            {entries.map((entry) => {
+              const isEditing = editingEntryId === entry.id
+              return (
+                <div
+                  key={entry.id}
+                  className={`flex items-start justify-between p-3 rounded-lg border-2 transition-all ${
+                    isEditing
+                      ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-200'
+                      : 'bg-gray-50 border-transparent hover:border-gray-200'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-gray-900">{entry.organization}</p>
+                      {isEditing && (
+                        <span className="px-2 py-0.5 text-xs font-medium bg-blue-500 text-white rounded-full">
+                          Editing
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600">Joined: {entry.dateJoined}</p>
+                    <p className="text-xs text-gray-500 mt-1 capitalize">{entry.status}</p>
+                    {getEvidenceCount(entry) > 0 && (
+                      <p className="text-xs text-blue-600 mt-1">
+                        {getEvidenceCount(entry)} evidence item(s)
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={isEditing ? 'primary' : 'ghost'}
+                      size="sm"
+                      onClick={() => handleEdit(entry)}
+                    >
+                      {isEditing ? 'Editing...' : 'Edit'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveEntry(entry.id)}
+                      disabled={isEditing}
+                    >
+                      Remove
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEdit(entry)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveEntry(entry.id)}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onAddEntry)} className="space-y-4">
+        <form ref={formRef} onSubmit={handleSubmit(onAddEntry)} className="space-y-4">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-medium text-gray-700">
               {editingEntryId ? 'Edit Membership' : 'Add New Membership'}

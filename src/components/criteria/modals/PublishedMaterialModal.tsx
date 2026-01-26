@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -33,6 +33,13 @@ export function PublishedMaterialModal({ open, onOpenChange }: PublishedMaterial
   const criterion = getCriterionDefinition('publishedMaterial')!
   const [evidence, setEvidence] = useState<Evidence>(emptyEvidence)
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+
+  useEffect(() => {
+    if (editingEntryId && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [editingEntryId])
 
   const {
     register,
@@ -124,49 +131,64 @@ export function PublishedMaterialModal({ open, onOpenChange }: PublishedMaterial
         {entries.length > 0 && (
           <div className="space-y-3">
             <h4 className="text-sm font-medium text-gray-700">Your Entries ({entries.length})</h4>
-            {entries.map((entry) => (
-              <div
-                key={entry.id}
-                className="flex items-start justify-between p-3 bg-gray-50 rounded-lg"
-              >
-                <div>
-                  <p className="font-medium text-gray-900">{entry.title}</p>
-                  <p className="text-sm text-gray-600">{entry.publication} • {entry.date}</p>
-                  {entry.url && (
-                    <a href={entry.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
-                      View article
-                    </a>
-                  )}
-                  {getEvidenceCount(entry) > 0 && (
-                    <p className="text-xs text-blue-600 mt-1">
-                      📎 {getEvidenceCount(entry)} evidence item(s)
-                    </p>
-                  )}
+            {entries.map((entry) => {
+              const isEditing = editingEntryId === entry.id
+              return (
+                <div
+                  key={entry.id}
+                  className={`flex items-start justify-between p-3 rounded-lg border-2 transition-all ${
+                    isEditing
+                      ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-200'
+                      : 'bg-gray-50 border-transparent hover:border-gray-200'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-gray-900">{entry.title}</p>
+                      {isEditing && (
+                        <span className="px-2 py-0.5 text-xs font-medium bg-blue-500 text-white rounded-full">
+                          Editing
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600">{entry.publication} • {entry.date}</p>
+                    {entry.url && (
+                      <a href={entry.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
+                        View article
+                      </a>
+                    )}
+                    {getEvidenceCount(entry) > 0 && (
+                      <p className="text-xs text-blue-600 mt-1">
+                        {getEvidenceCount(entry)} evidence item(s)
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={isEditing ? 'primary' : 'ghost'}
+                      size="sm"
+                      onClick={() => handleEdit(entry)}
+                    >
+                      {isEditing ? 'Editing...' : 'Edit'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveEntry(entry.id)}
+                      disabled={isEditing}
+                    >
+                      Remove
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEdit(entry)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveEntry(entry.id)}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onAddEntry)} className="space-y-4">
+        <form ref={formRef} onSubmit={handleSubmit(onAddEntry)} className="space-y-4">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-medium text-gray-700">
               {editingEntryId ? 'Edit Published Material' : 'Add New Published Material'}

@@ -38,7 +38,8 @@ export default function CriteriaPage() {
 
   const completedCount = getCompletedCriteriaCount()
   const minimumMet = completedCount >= 3
-  const canSubmit = canProceedToReview() && !applicationSubmittedForReview
+  const hasPassportPhoto = !!demographics.passportImage
+  const canSubmit = canProceedToReview() && !applicationSubmittedForReview && hasPassportPhoto
 
   const handleSubmitForReview = () => {
     submitForReview()
@@ -46,7 +47,7 @@ export default function CriteriaPage() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         <ProgressBreadcrumb currentStep="criteria" completedCriteria={completedCount} />
 
@@ -86,21 +87,31 @@ export default function CriteriaPage() {
           </p>
 
           {minimumMet && (
-            <div className="mt-4 flex items-center gap-4">
-              {applicationSubmittedForReview ? (
-                <Button
-                  onClick={() => router.push('/review')}
-                  variant="secondary"
-                >
-                  View Review Status
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleSubmitForReview}
-                  disabled={!canSubmit}
-                >
-                  Submit for Review
-                </Button>
+            <div className="mt-4">
+              <div className="flex items-center gap-4">
+                {applicationSubmittedForReview ? (
+                  <Button
+                    onClick={() => router.push('/review')}
+                    variant="secondary"
+                  >
+                    View Review Status
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleSubmitForReview}
+                    disabled={!canSubmit}
+                  >
+                    Submit for Review
+                  </Button>
+                )}
+              </div>
+              {!applicationSubmittedForReview && !hasPassportPhoto && (
+                <p className="mt-2 text-sm text-amber-600 flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  Please upload your passport photo on the Demographics page before submitting for review.
+                </p>
               )}
             </div>
           )}

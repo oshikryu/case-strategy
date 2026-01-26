@@ -4,7 +4,7 @@ import { DemographicForm } from '@/components/landing/DemographicForm'
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+    <div className="py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">

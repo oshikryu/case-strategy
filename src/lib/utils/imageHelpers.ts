@@ -1,4 +1,7 @@
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
+const TARGET_MAX_WIDTH = 800
+const TARGET_MAX_HEIGHT = 800
+const COMPRESSION_QUALITY = 0.7
 
 export interface ImageValidationResult {
   valid: boolean
@@ -33,4 +36,43 @@ export function getImageDimensions(base64: string): Promise<{ width: number; hei
     img.onerror = reject
     img.src = base64
   })
+}
+
+export function compressImage(base64: string, maxWidth = TARGET_MAX_WIDTH, maxHeight = TARGET_MAX_HEIGHT, quality = COMPRESSION_QUALITY): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      let { width, height } = img
+
+      // Calculate new dimensions while maintaining aspect ratio
+      if (width > maxWidth || height > maxHeight) {
+        const ratio = Math.min(maxWidth / width, maxHeight / height)
+        width = Math.round(width * ratio)
+        height = Math.round(height * ratio)
+      }
+
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        reject(new Error('Failed to get canvas context'))
+        return
+      }
+
+      ctx.drawImage(img, 0, 0, width, height)
+
+      // Convert to JPEG for better compression
+      const compressedBase64 = canvas.toDataURL('image/jpeg', quality)
+      resolve(compressedBase64)
+    }
+    img.onerror = () => reject(new Error('Failed to load image'))
+    img.src = base64
+  })
+}
+
+export async function fileToCompressedBase64(file: File): Promise<string> {
+  const base64 = await fileToBase64(file)
+  return compressImage(base64)
 }

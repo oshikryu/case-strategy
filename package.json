@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "build:gh-pages": "NEXT_PUBLIC_BASE_PATH=/case-strategy npm run build && touch out/.nojekyll",
+    "deploy": "npm run build:gh-pages && npx gh-pages -d out --dotfiles"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",

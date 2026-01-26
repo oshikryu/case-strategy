@@ -2,7 +2,7 @@
 
 import { useState, useRef, ChangeEvent } from 'react'
 import { cn } from '@/lib/utils'
-import { validateImageFile, fileToBase64 } from '@/lib/utils/imageHelpers'
+import { validateImageFile, fileToCompressedBase64 } from '@/lib/utils/imageHelpers'
 import { Button } from '@/components/ui'
 
 export interface PassportUploadProps {
@@ -30,7 +30,7 @@ export function PassportUpload({ value, onChange, error }: PassportUploadProps) 
 
     setIsLoading(true)
     try {
-      const base64 = await fileToBase64(file)
+      const base64 = await fileToCompressedBase64(file)
       onChange(base64)
     } catch {
       setUploadError('Failed to process image')
@@ -51,7 +51,7 @@ export function PassportUpload({ value, onChange, error }: PassportUploadProps) 
   return (
     <div className="w-full">
       <label className="block text-sm font-medium text-gray-700 mb-1">
-        Passport Photo (Optional)
+        Passport Photo (Can upload later)
       </label>
       <p className="text-sm text-gray-500 mb-2">
         Upload a clear photo of your passport&apos;s photo page. Max 5MB.
