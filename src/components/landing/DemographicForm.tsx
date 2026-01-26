@@ -15,11 +15,12 @@ const demographicsSchema = z.object({
   middleName: z.string().optional(),
   lastName: z.string().min(1, 'Last name is required'),
   countryOfBirth: z.string().min(1, 'Country of birth is required'),
-  streetAddress: z.string().min(1, 'Street address is required'),
-  city: z.string().min(1, 'City is required'),
-  state: z.string().min(1, 'State/Province is required'),
-  zipCode: z.string().min(1, 'ZIP/Postal code is required'),
   country: z.string().min(1, 'Country is required'),
+  addressLine1: z.string().min(1, 'Address is required'),
+  addressLine2: z.string().optional(),
+  city: z.string().min(1, 'City is required'),
+  stateOrRegion: z.string().optional(),
+  postalCode: z.string().optional(),
   currentVisaType: z.nativeEnum(VisaType, {
     errorMap: () => ({ message: 'Please select a visa type' }),
   }),
@@ -44,11 +45,12 @@ export function DemographicForm() {
       middleName: '',
       lastName: '',
       countryOfBirth: '',
-      streetAddress: '',
-      city: '',
-      state: '',
-      zipCode: '',
       country: '',
+      addressLine1: '',
+      addressLine2: '',
+      city: '',
+      stateOrRegion: '',
+      postalCode: '',
       currentVisaType: undefined,
       passportImage: undefined,
     },
@@ -99,39 +101,44 @@ export function DemographicForm() {
         <h3 className="text-lg font-medium text-gray-900 mb-4">Current Address</h3>
         <div className="space-y-4">
           <Input
-            label="Street Address"
-            placeholder="123 Main St, Apt 4B"
-            error={errors.streetAddress?.message}
-            {...register('streetAddress')}
+            label="Country of Residence"
+            placeholder="e.g., Japan, Germany, Brazil"
+            error={errors.country?.message}
+            {...register('country')}
+          />
+          <Input
+            label="Address Line 1"
+            placeholder="Street address, P.O. box, or company name"
+            error={errors.addressLine1?.message}
+            {...register('addressLine1')}
+          />
+          <Input
+            label="Address Line 2 (Optional)"
+            placeholder="Apartment, suite, unit, building, floor, etc."
+            error={errors.addressLine2?.message}
+            {...register('addressLine2')}
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="City"
-              placeholder="San Francisco"
+              label="City / Town"
+              placeholder="e.g., Tokyo, Berlin, São Paulo"
               error={errors.city?.message}
               {...register('city')}
             />
             <Input
-              label="State/Province"
-              placeholder="California"
-              error={errors.state?.message}
-              {...register('state')}
+              label="State / Province / Region (Optional)"
+              placeholder="e.g., Saitama, Bavaria, Rio de Janeiro"
+              error={errors.stateOrRegion?.message}
+              {...register('stateOrRegion')}
             />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="ZIP/Postal Code"
-              placeholder="94102"
-              error={errors.zipCode?.message}
-              {...register('zipCode')}
-            />
-            <Input
-              label="Country"
-              placeholder="United States"
-              error={errors.country?.message}
-              {...register('country')}
-            />
-          </div>
+          <Input
+            label="Postal / ZIP Code (Optional)"
+            placeholder="e.g., 150-0001, 80331, 20040-020"
+            helperText="Leave blank if your country does not use postal codes"
+            error={errors.postalCode?.message}
+            {...register('postalCode')}
+          />
         </div>
       </div>
 

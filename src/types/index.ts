@@ -15,10 +15,11 @@ export interface Demographics {
   middleName?: string
   lastName: string
   countryOfBirth: string
-  streetAddress: string
+  addressLine1: string
+  addressLine2?: string
   city: string
-  state: string
-  zipCode: string
+  stateOrRegion?: string
+  postalCode?: string
   country: string
   currentVisaType: VisaType
   passportImage?: string // base64

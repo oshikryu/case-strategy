@@ -20,7 +20,7 @@ export default function LandingPage() {
             <p className="text-sm text-blue-700">
               To qualify, you must demonstrate extraordinary ability through sustained
               national or international acclaim. USCIS requires evidence meeting at least
-              3 of 8 criteria, or a one-time major achievement (like a Nobel Prize).
+              3 of 8 criteria, or a one-time major achievement.
             </p>
           </div>
         </div>
