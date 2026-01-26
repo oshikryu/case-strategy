@@ -70,8 +70,8 @@ export function AwardsModal({ open, onOpenChange }: AwardsModalProps) {
     },
   })
 
-  const handleAnalyze = (fieldId: string, label: string) => (value: string) => {
-    analyzeContextualRelevance({
+  const handleAnalyze = (fieldId: string, label: string) => async (value: string) => {
+    return analyzeContextualRelevance({
       fieldId,
       criterionType: 'awards',
       content: value,

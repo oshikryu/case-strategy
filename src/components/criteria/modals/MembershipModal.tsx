@@ -59,8 +59,8 @@ export function MembershipModal({ open, onOpenChange }: MembershipModalProps) {
     resolver: zodResolver(membershipSchema),
   })
 
-  const handleAnalyze = (fieldId: string, label: string) => (value: string) => {
-    analyzeContextualRelevance({
+  const handleAnalyze = (fieldId: string, label: string) => async (value: string) => {
+    return analyzeContextualRelevance({
       fieldId,
       criterionType: 'membership',
       content: value,

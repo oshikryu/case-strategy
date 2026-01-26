@@ -72,8 +72,8 @@ export function ProfessionalConnectionsForm({ onNext, onBack }: ProfessionalConn
     },
   })
 
-  const handleAnalyze = (fieldId: string, label: string) => (value: string) => {
-    analyzeContextualRelevance({
+  const handleAnalyze = (fieldId: string, label: string) => async (value: string) => {
+    return analyzeContextualRelevance({
       fieldId,
       criterionType: 'professionalConnections',
       content: value,

@@ -53,8 +53,8 @@ export function CriticalEmploymentModal({ open, onOpenChange }: CriticalEmployme
     resolver: zodResolver(criticalEmploymentSchema),
   })
 
-  const handleAnalyze = (fieldId: string, label: string) => (value: string) => {
-    analyzeContextualRelevance({
+  const handleAnalyze = (fieldId: string, label: string) => async (value: string) => {
+    return analyzeContextualRelevance({
       fieldId,
       criterionType: 'criticalEmployment',
       content: value,

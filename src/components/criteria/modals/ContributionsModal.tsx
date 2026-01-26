@@ -52,8 +52,8 @@ export function ContributionsModal({ open, onOpenChange }: ContributionsModalPro
     resolver: zodResolver(contributionSchema),
   })
 
-  const handleAnalyze = (fieldId: string, label: string) => (value: string) => {
-    analyzeContextualRelevance({
+  const handleAnalyze = (fieldId: string, label: string) => async (value: string) => {
+    return analyzeContextualRelevance({
       fieldId,
       criterionType: 'contributions',
       content: value,

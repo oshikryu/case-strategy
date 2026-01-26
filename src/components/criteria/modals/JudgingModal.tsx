@@ -53,8 +53,8 @@ export function JudgingModal({ open, onOpenChange }: JudgingModalProps) {
     resolver: zodResolver(judgingSchema),
   })
 
-  const handleAnalyze = (fieldId: string, label: string) => (value: string) => {
-    analyzeContextualRelevance({
+  const handleAnalyze = (fieldId: string, label: string) => async (value: string) => {
+    return analyzeContextualRelevance({
       fieldId,
       criterionType: 'judging',
       content: value,

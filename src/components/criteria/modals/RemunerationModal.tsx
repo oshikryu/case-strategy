@@ -70,8 +70,8 @@ export function RemunerationModal({ open, onOpenChange }: RemunerationModalProps
     },
   })
 
-  const handleAnalyze = (fieldId: string, label: string) => (value: string) => {
-    analyzeContextualRelevance({
+  const handleAnalyze = (fieldId: string, label: string) => async (value: string) => {
+    return analyzeContextualRelevance({
       fieldId,
       criterionType: 'remuneration',
       content: value,

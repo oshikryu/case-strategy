@@ -52,8 +52,8 @@ export function PublishedMaterialModal({ open, onOpenChange }: PublishedMaterial
     resolver: zodResolver(publishedMaterialSchema),
   })
 
-  const handleAnalyze = (fieldId: string, label: string) => (value: string) => {
-    analyzeContextualRelevance({
+  const handleAnalyze = (fieldId: string, label: string) => async (value: string) => {
+    return analyzeContextualRelevance({
       fieldId,
       criterionType: 'publishedMaterial',
       content: value,
