@@ -1,12 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Modal } from '@/components/ui/Modal'
-import { Button, Input, TextArea } from '@/components/ui'
+import { Button, Input, TextArea, EvidenceInput } from '@/components/ui'
 import { useApplicationStore, generateId } from '@/lib/stores/useApplicationStore'
-import { PublishedMaterialEntry } from '@/types'
+import { PublishedMaterialEntry, Evidence } from '@/types'
 import { getCriterionDefinition } from '@/lib/constants'
 
 const publishedMaterialSchema = z.object({
@@ -24,10 +25,13 @@ interface PublishedMaterialModalProps {
   onOpenChange: (open: boolean) => void
 }
 
+const emptyEvidence: Evidence = { files: [], urls: [] }
+
 export function PublishedMaterialModal({ open, onOpenChange }: PublishedMaterialModalProps) {
   const { criteria, addEntry, removeEntry, setCriterionComplete, setCriterionDraft } = useApplicationStore()
   const entries = criteria.publishedMaterial.entries as PublishedMaterialEntry[]
   const criterion = getCriterionDefinition('publishedMaterial')!
+  const [evidence, setEvidence] = useState<Evidence>(emptyEvidence)
 
   const {
     register,
@@ -43,9 +47,11 @@ export function PublishedMaterialModal({ open, onOpenChange }: PublishedMaterial
       id: generateId(),
       ...data,
       url: data.url || undefined,
+      evidence: evidence.files.length > 0 || evidence.urls.length > 0 ? evidence : undefined,
     }
     addEntry('publishedMaterial', entry)
     reset()
+    setEvidence(emptyEvidence)
   }
 
   const handleRemoveEntry = (id: string) => {
@@ -62,6 +68,11 @@ export function PublishedMaterialModal({ open, onOpenChange }: PublishedMaterial
       setCriterionComplete('publishedMaterial', true)
       onOpenChange(false)
     }
+  }
+
+  const getEvidenceCount = (entry: PublishedMaterialEntry) => {
+    if (!entry.evidence) return 0
+    return entry.evidence.files.length + entry.evidence.urls.length
   }
 
   return (
@@ -96,6 +107,11 @@ export function PublishedMaterialModal({ open, onOpenChange }: PublishedMaterial
                     <a href={entry.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
                       View article
                     </a>
+                  )}
+                  {getEvidenceCount(entry) > 0 && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      📎 {getEvidenceCount(entry)} evidence item(s)
+                    </p>
                   )}
                 </div>
                 <Button
@@ -136,7 +152,7 @@ export function PublishedMaterialModal({ open, onOpenChange }: PublishedMaterial
           />
 
           <Input
-            label="URL (Optional)"
+            label="Article URL (Optional)"
             placeholder="https://..."
             error={errors.url?.message}
             {...register('url')}
@@ -147,6 +163,12 @@ export function PublishedMaterialModal({ open, onOpenChange }: PublishedMaterial
             placeholder="Describe the publication's circulation, readership, or reach..."
             error={errors.circulation?.message}
             {...register('circulation')}
+          />
+
+          <EvidenceInput
+            value={evidence}
+            onChange={setEvidence}
+            helperText="Upload PDFs of articles, screenshots, or links to archived versions"
           />
 
           <Button type="submit" variant="secondary" className="w-full">

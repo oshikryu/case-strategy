@@ -1,12 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Modal } from '@/components/ui/Modal'
-import { Button, Input, TextArea, Select } from '@/components/ui'
+import { Button, Input, TextArea, Select, EvidenceInput } from '@/components/ui'
 import { useApplicationStore, generateId } from '@/lib/stores/useApplicationStore'
-import { RemunerationEntry } from '@/types'
+import { RemunerationEntry, Evidence } from '@/types'
 import { getCriterionDefinition } from '@/lib/constants'
 
 const remunerationSchema = z.object({
@@ -36,10 +37,13 @@ const currencyOptions = [
   { value: 'OTHER', label: 'Other' },
 ]
 
+const emptyEvidence: Evidence = { files: [], urls: [] }
+
 export function RemunerationModal({ open, onOpenChange }: RemunerationModalProps) {
   const { criteria, addEntry, removeEntry, setCriterionComplete, setCriterionDraft } = useApplicationStore()
   const entries = criteria.remuneration.entries as RemunerationEntry[]
   const criterion = getCriterionDefinition('remuneration')!
+  const [evidence, setEvidence] = useState<Evidence>(emptyEvidence)
 
   const {
     register,
@@ -58,9 +62,11 @@ export function RemunerationModal({ open, onOpenChange }: RemunerationModalProps
     const entry: RemunerationEntry = {
       id: generateId(),
       ...data,
+      evidence: evidence.files.length > 0 || evidence.urls.length > 0 ? evidence : undefined,
     }
     addEntry('remuneration', entry)
     reset()
+    setEvidence(emptyEvidence)
   }
 
   const handleRemoveEntry = (id: string) => {
@@ -84,6 +90,11 @@ export function RemunerationModal({ open, onOpenChange }: RemunerationModalProps
       style: 'currency',
       currency: currency === 'OTHER' ? 'USD' : currency,
     }).format(amount)
+  }
+
+  const getEvidenceCount = (entry: RemunerationEntry) => {
+    if (!entry.evidence) return 0
+    return entry.evidence.files.length + entry.evidence.urls.length
   }
 
   return (
@@ -117,6 +128,11 @@ export function RemunerationModal({ open, onOpenChange }: RemunerationModalProps
                   <p className="text-xs text-gray-500 mt-1">
                     {formatCurrency(entry.salary, entry.currency)}
                   </p>
+                  {getEvidenceCount(entry) > 0 && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      📎 {getEvidenceCount(entry)} evidence item(s)
+                    </p>
+                  )}
                 </div>
                 <Button
                   type="button"
@@ -179,6 +195,12 @@ export function RemunerationModal({ open, onOpenChange }: RemunerationModalProps
             placeholder="Provide evidence that this salary is high compared to others in similar positions (e.g., industry benchmarks, percentile rankings, salary surveys)..."
             error={errors.comparativeData?.message}
             {...register('comparativeData')}
+          />
+
+          <EvidenceInput
+            value={evidence}
+            onChange={setEvidence}
+            helperText="Upload pay stubs, offer letters, tax documents, or links to salary surveys/benchmarks"
           />
 
           <Button type="submit" variant="secondary" className="w-full">

@@ -1,12 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Modal } from '@/components/ui/Modal'
-import { Button, Input, TextArea } from '@/components/ui'
+import { Button, Input, TextArea, EvidenceInput } from '@/components/ui'
 import { useApplicationStore, generateId } from '@/lib/stores/useApplicationStore'
-import { ContributionEntry } from '@/types'
+import { ContributionEntry, Evidence } from '@/types'
 import { getCriterionDefinition } from '@/lib/constants'
 
 const contributionSchema = z.object({
@@ -24,10 +25,13 @@ interface ContributionsModalProps {
   onOpenChange: (open: boolean) => void
 }
 
+const emptyEvidence: Evidence = { files: [], urls: [] }
+
 export function ContributionsModal({ open, onOpenChange }: ContributionsModalProps) {
   const { criteria, addEntry, removeEntry, setCriterionComplete, setCriterionDraft } = useApplicationStore()
   const entries = criteria.contributions.entries as ContributionEntry[]
   const criterion = getCriterionDefinition('contributions')!
+  const [evidence, setEvidence] = useState<Evidence>(emptyEvidence)
 
   const {
     register,
@@ -42,9 +46,11 @@ export function ContributionsModal({ open, onOpenChange }: ContributionsModalPro
     const entry: ContributionEntry = {
       id: generateId(),
       ...data,
+      evidence: evidence.files.length > 0 || evidence.urls.length > 0 ? evidence : undefined,
     }
     addEntry('contributions', entry)
     reset()
+    setEvidence(emptyEvidence)
   }
 
   const handleRemoveEntry = (id: string) => {
@@ -61,6 +67,11 @@ export function ContributionsModal({ open, onOpenChange }: ContributionsModalPro
       setCriterionComplete('contributions', true)
       onOpenChange(false)
     }
+  }
+
+  const getEvidenceCount = (entry: ContributionEntry) => {
+    if (!entry.evidence) return 0
+    return entry.evidence.files.length + entry.evidence.urls.length
   }
 
   return (
@@ -92,6 +103,11 @@ export function ContributionsModal({ open, onOpenChange }: ContributionsModalPro
                   <p className="font-medium text-gray-900">{entry.title}</p>
                   <p className="text-sm text-gray-600">{entry.date}</p>
                   <p className="text-xs text-gray-500 mt-1 line-clamp-2">{entry.impact}</p>
+                  {getEvidenceCount(entry) > 0 && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      📎 {getEvidenceCount(entry)} evidence item(s)
+                    </p>
+                  )}
                 </div>
                 <Button
                   type="button"
@@ -142,6 +158,12 @@ export function ContributionsModal({ open, onOpenChange }: ContributionsModalPro
             placeholder="How has this contribution been recognized by the field?"
             error={errors.recognition?.message}
             {...register('recognition')}
+          />
+
+          <EvidenceInput
+            value={evidence}
+            onChange={setEvidence}
+            helperText="Upload patents, technical documents, citations, or links to repositories/products"
           />
 
           <Button type="submit" variant="secondary" className="w-full">

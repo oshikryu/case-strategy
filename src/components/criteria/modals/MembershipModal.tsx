@@ -1,12 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Modal } from '@/components/ui/Modal'
-import { Button, Input, TextArea, Select } from '@/components/ui'
+import { Button, Input, TextArea, Select, EvidenceInput } from '@/components/ui'
 import { useApplicationStore, generateId } from '@/lib/stores/useApplicationStore'
-import { MembershipEntry } from '@/types'
+import { MembershipEntry, Evidence } from '@/types'
 import { getCriterionDefinition } from '@/lib/constants'
 
 const membershipSchema = z.object({
@@ -31,10 +32,13 @@ const statusOptions = [
   { value: 'former', label: 'Former Member' },
 ]
 
+const emptyEvidence: Evidence = { files: [], urls: [] }
+
 export function MembershipModal({ open, onOpenChange }: MembershipModalProps) {
   const { criteria, addEntry, removeEntry, setCriterionComplete, setCriterionDraft } = useApplicationStore()
   const entries = criteria.membership.entries as MembershipEntry[]
   const criterion = getCriterionDefinition('membership')!
+  const [evidence, setEvidence] = useState<Evidence>(emptyEvidence)
 
   const {
     register,
@@ -49,9 +53,11 @@ export function MembershipModal({ open, onOpenChange }: MembershipModalProps) {
     const entry: MembershipEntry = {
       id: generateId(),
       ...data,
+      evidence: evidence.files.length > 0 || evidence.urls.length > 0 ? evidence : undefined,
     }
     addEntry('membership', entry)
     reset()
+    setEvidence(emptyEvidence)
   }
 
   const handleRemoveEntry = (id: string) => {
@@ -68,6 +74,11 @@ export function MembershipModal({ open, onOpenChange }: MembershipModalProps) {
       setCriterionComplete('membership', true)
       onOpenChange(false)
     }
+  }
+
+  const getEvidenceCount = (entry: MembershipEntry) => {
+    if (!entry.evidence) return 0
+    return entry.evidence.files.length + entry.evidence.urls.length
   }
 
   return (
@@ -99,6 +110,11 @@ export function MembershipModal({ open, onOpenChange }: MembershipModalProps) {
                   <p className="font-medium text-gray-900">{entry.organization}</p>
                   <p className="text-sm text-gray-600">Joined: {entry.dateJoined}</p>
                   <p className="text-xs text-gray-500 mt-1 capitalize">{entry.status}</p>
+                  {getEvidenceCount(entry) > 0 && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      📎 {getEvidenceCount(entry)} evidence item(s)
+                    </p>
+                  )}
                 </div>
                 <Button
                   type="button"
@@ -150,6 +166,12 @@ export function MembershipModal({ open, onOpenChange }: MembershipModalProps) {
             placeholder="Describe your achievements and contributions..."
             error={errors.achievements?.message}
             {...register('achievements')}
+          />
+
+          <EvidenceInput
+            value={evidence}
+            onChange={setEvidence}
+            helperText="Upload membership certificates, invitation letters, or links to member directories"
           />
 
           <Button type="submit" variant="secondary" className="w-full">

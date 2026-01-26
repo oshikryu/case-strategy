@@ -1,12 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Modal } from '@/components/ui/Modal'
-import { Button, Input, TextArea } from '@/components/ui'
+import { Button, Input, TextArea, EvidenceInput } from '@/components/ui'
 import { useApplicationStore, generateId } from '@/lib/stores/useApplicationStore'
-import { CriticalEmploymentEntry } from '@/types'
+import { CriticalEmploymentEntry, Evidence } from '@/types'
 import { getCriterionDefinition } from '@/lib/constants'
 
 const criticalEmploymentSchema = z.object({
@@ -25,10 +26,13 @@ interface CriticalEmploymentModalProps {
   onOpenChange: (open: boolean) => void
 }
 
+const emptyEvidence: Evidence = { files: [], urls: [] }
+
 export function CriticalEmploymentModal({ open, onOpenChange }: CriticalEmploymentModalProps) {
   const { criteria, addEntry, removeEntry, setCriterionComplete, setCriterionDraft } = useApplicationStore()
   const entries = criteria.criticalEmployment.entries as CriticalEmploymentEntry[]
   const criterion = getCriterionDefinition('criticalEmployment')!
+  const [evidence, setEvidence] = useState<Evidence>(emptyEvidence)
 
   const {
     register,
@@ -44,9 +48,11 @@ export function CriticalEmploymentModal({ open, onOpenChange }: CriticalEmployme
       id: generateId(),
       ...data,
       endDate: data.endDate || undefined,
+      evidence: evidence.files.length > 0 || evidence.urls.length > 0 ? evidence : undefined,
     }
     addEntry('criticalEmployment', entry)
     reset()
+    setEvidence(emptyEvidence)
   }
 
   const handleRemoveEntry = (id: string) => {
@@ -63,6 +69,11 @@ export function CriticalEmploymentModal({ open, onOpenChange }: CriticalEmployme
       setCriterionComplete('criticalEmployment', true)
       onOpenChange(false)
     }
+  }
+
+  const getEvidenceCount = (entry: CriticalEmploymentEntry) => {
+    if (!entry.evidence) return 0
+    return entry.evidence.files.length + entry.evidence.urls.length
   }
 
   return (
@@ -96,6 +107,11 @@ export function CriticalEmploymentModal({ open, onOpenChange }: CriticalEmployme
                   <p className="text-xs text-gray-500 mt-1">
                     {entry.startDate} - {entry.endDate || 'Present'}
                   </p>
+                  {getEvidenceCount(entry) > 0 && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      📎 {getEvidenceCount(entry)} evidence item(s)
+                    </p>
+                  )}
                 </div>
                 <Button
                   type="button"
@@ -154,6 +170,12 @@ export function CriticalEmploymentModal({ open, onOpenChange }: CriticalEmployme
             placeholder="Explain why this role is critical/essential to the organization..."
             error={errors.criticalNature?.message}
             {...register('criticalNature')}
+          />
+
+          <EvidenceInput
+            value={evidence}
+            onChange={setEvidence}
+            helperText="Upload offer letters, org charts, job descriptions, or links to company profiles"
           />
 
           <Button type="submit" variant="secondary" className="w-full">

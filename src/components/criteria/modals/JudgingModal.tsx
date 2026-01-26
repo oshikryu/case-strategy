@@ -1,12 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Modal } from '@/components/ui/Modal'
-import { Button, Input, TextArea } from '@/components/ui'
+import { Button, Input, TextArea, EvidenceInput } from '@/components/ui'
 import { useApplicationStore, generateId } from '@/lib/stores/useApplicationStore'
-import { JudgingEntry } from '@/types'
+import { JudgingEntry, Evidence } from '@/types'
 import { getCriterionDefinition } from '@/lib/constants'
 
 const judgingSchema = z.object({
@@ -25,10 +26,13 @@ interface JudgingModalProps {
   onOpenChange: (open: boolean) => void
 }
 
+const emptyEvidence: Evidence = { files: [], urls: [] }
+
 export function JudgingModal({ open, onOpenChange }: JudgingModalProps) {
   const { criteria, addEntry, removeEntry, setCriterionComplete, setCriterionDraft } = useApplicationStore()
   const entries = criteria.judging.entries as JudgingEntry[]
   const criterion = getCriterionDefinition('judging')!
+  const [evidence, setEvidence] = useState<Evidence>(emptyEvidence)
 
   const {
     register,
@@ -44,9 +48,11 @@ export function JudgingModal({ open, onOpenChange }: JudgingModalProps) {
       id: generateId(),
       ...data,
       endDate: data.endDate || undefined,
+      evidence: evidence.files.length > 0 || evidence.urls.length > 0 ? evidence : undefined,
     }
     addEntry('judging', entry)
     reset()
+    setEvidence(emptyEvidence)
   }
 
   const handleRemoveEntry = (id: string) => {
@@ -63,6 +69,11 @@ export function JudgingModal({ open, onOpenChange }: JudgingModalProps) {
       setCriterionComplete('judging', true)
       onOpenChange(false)
     }
+  }
+
+  const getEvidenceCount = (entry: JudgingEntry) => {
+    if (!entry.evidence) return 0
+    return entry.evidence.files.length + entry.evidence.urls.length
   }
 
   return (
@@ -96,6 +107,11 @@ export function JudgingModal({ open, onOpenChange }: JudgingModalProps) {
                   <p className="text-xs text-gray-500 mt-1">
                     {entry.startDate} - {entry.endDate || 'Present'} • {entry.submissionsCount} submissions reviewed
                   </p>
+                  {getEvidenceCount(entry) > 0 && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      📎 {getEvidenceCount(entry)} evidence item(s)
+                    </p>
+                  )}
                 </div>
                 <Button
                   type="button"
@@ -155,6 +171,12 @@ export function JudgingModal({ open, onOpenChange }: JudgingModalProps) {
             placeholder="Describe the nature of the judging work and its significance..."
             error={errors.context?.message}
             {...register('context')}
+          />
+
+          <EvidenceInput
+            value={evidence}
+            onChange={setEvidence}
+            helperText="Upload invitation letters, thank you notes, reviewer certificates, or links to reviewer acknowledgments"
           />
 
           <Button type="submit" variant="secondary" className="w-full">

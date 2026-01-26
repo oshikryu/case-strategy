@@ -1,12 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Modal } from '@/components/ui/Modal'
-import { Button, Input, TextArea } from '@/components/ui'
+import { Button, Input, TextArea, EvidenceInput } from '@/components/ui'
 import { useApplicationStore, generateId } from '@/lib/stores/useApplicationStore'
-import { AuthorshipEntry } from '@/types'
+import { AuthorshipEntry, Evidence } from '@/types'
 import { getCriterionDefinition } from '@/lib/constants'
 
 const authorshipSchema = z.object({
@@ -25,10 +26,13 @@ interface AuthorshipModalProps {
   onOpenChange: (open: boolean) => void
 }
 
+const emptyEvidence: Evidence = { files: [], urls: [] }
+
 export function AuthorshipModal({ open, onOpenChange }: AuthorshipModalProps) {
   const { criteria, addEntry, removeEntry, setCriterionComplete, setCriterionDraft } = useApplicationStore()
   const entries = criteria.authorship.entries as AuthorshipEntry[]
   const criterion = getCriterionDefinition('authorship')!
+  const [evidence, setEvidence] = useState<Evidence>(emptyEvidence)
 
   const {
     register,
@@ -46,9 +50,11 @@ export function AuthorshipModal({ open, onOpenChange }: AuthorshipModalProps) {
       coauthors: data.coauthors || undefined,
       citations: data.citations || undefined,
       doi: data.doi || undefined,
+      evidence: evidence.files.length > 0 || evidence.urls.length > 0 ? evidence : undefined,
     }
     addEntry('authorship', entry)
     reset()
+    setEvidence(emptyEvidence)
   }
 
   const handleRemoveEntry = (id: string) => {
@@ -65,6 +71,11 @@ export function AuthorshipModal({ open, onOpenChange }: AuthorshipModalProps) {
       setCriterionComplete('authorship', true)
       onOpenChange(false)
     }
+  }
+
+  const getEvidenceCount = (entry: AuthorshipEntry) => {
+    if (!entry.evidence) return 0
+    return entry.evidence.files.length + entry.evidence.urls.length
   }
 
   return (
@@ -99,6 +110,11 @@ export function AuthorshipModal({ open, onOpenChange }: AuthorshipModalProps) {
                     {entry.citations !== undefined && `${entry.citations} citations`}
                     {entry.doi && ` • DOI: ${entry.doi}`}
                   </p>
+                  {getEvidenceCount(entry) > 0 && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      📎 {getEvidenceCount(entry)} evidence item(s)
+                    </p>
+                  )}
                 </div>
                 <Button
                   type="button"
@@ -159,6 +175,12 @@ export function AuthorshipModal({ open, onOpenChange }: AuthorshipModalProps) {
               {...register('doi')}
             />
           </div>
+
+          <EvidenceInput
+            value={evidence}
+            onChange={setEvidence}
+            helperText="Upload PDFs of publications, citation reports, or links to online articles"
+          />
 
           <Button type="submit" variant="secondary" className="w-full">
             Add Entry
