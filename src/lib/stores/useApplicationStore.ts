@@ -19,6 +19,10 @@ import {
   EmploymentHistoryEntry,
   EducationHistoryEntry,
   ProfessionalConnectionEntry,
+  ApplicationReview,
+  CriterionReview,
+  ReviewStatus,
+  UserRole,
 } from '@/types'
 
 const initialCriterionState: CriterionState = {
@@ -43,6 +47,9 @@ interface ApplicationStore {
   criteria: Record<CriterionType, CriterionState>
   intake: IntakeData | null
   recommendations: RecommendationResult | null
+  review: ApplicationReview | null
+  applicationSubmittedForReview: boolean
+  userRole: UserRole
 
   // Demographics actions
   setDemographics: (demographics: Demographics) => void
@@ -70,10 +77,18 @@ interface ApplicationStore {
   skipRecommendations: () => void
   setRecommendations: (recommendations: RecommendationResult) => void
 
+  // Review actions
+  submitForReview: () => void
+  setUserRole: (role: UserRole) => void
+  setCriterionReviewStatus: (criterionType: CriterionType, status: ReviewStatus, comment?: string) => void
+  setEntryReviewStatus: (criterionType: CriterionType, entryId: string, status: ReviewStatus, comment?: string) => void
+
   // Utility functions
   getCompletedCriteriaCount: () => number
   getCriterionEntries: <T extends CriterionEntry>(criterionType: CriterionType) => T[]
   populateCriteriaFromIntake: () => void
+  canProceedToReview: () => boolean
+  getReviewSummary: () => { approved: number; rejected: number; pending: number; changesRequested: number }
   resetApplication: () => void
 }
 
@@ -91,6 +106,9 @@ export const useApplicationStore = create<ApplicationStore>()(
       criteria: initialCriteria,
       intake: null,
       recommendations: null,
+      review: null,
+      applicationSubmittedForReview: false,
+      userRole: 'applicant' as UserRole,
 
       // Demographics actions
       setDemographics: (demographics) => set({ demographics }),
@@ -295,6 +313,82 @@ export const useApplicationStore = create<ApplicationStore>()(
 
       setRecommendations: (recommendations) => set({ recommendations }),
 
+      // Review actions
+      submitForReview: () => {
+        const { criteria, getCompletedCriteriaCount } = get()
+        if (getCompletedCriteriaCount() < 3) return
+
+        const criteriaTypes: CriterionType[] = [
+          'awards', 'membership', 'publishedMaterial', 'judging',
+          'contributions', 'authorship', 'criticalEmployment', 'remuneration'
+        ]
+
+        const criteriaReviews: Record<CriterionType, CriterionReview> = {} as Record<CriterionType, CriterionReview>
+
+        criteriaTypes.forEach((type) => {
+          criteriaReviews[type] = {
+            criterionType: type,
+            status: 'pending',
+            entryReviews: criteria[type].entries.map((entry) => ({
+              entryId: entry.id,
+              status: 'pending' as ReviewStatus,
+              reviewedAt: new Date().toISOString(),
+            })),
+          }
+        })
+
+        set({
+          applicationSubmittedForReview: true,
+          review: {
+            criteriaReviews,
+            submittedAt: new Date().toISOString(),
+          },
+        })
+      },
+
+      setUserRole: (role) => set({ userRole: role }),
+
+      setCriterionReviewStatus: (criterionType, status, comment) =>
+        set((state) => {
+          if (!state.review) return state
+          return {
+            review: {
+              ...state.review,
+              criteriaReviews: {
+                ...state.review.criteriaReviews,
+                [criterionType]: {
+                  ...state.review.criteriaReviews[criterionType],
+                  status,
+                  overallComment: comment,
+                  reviewedAt: new Date().toISOString(),
+                },
+              },
+            },
+          }
+        }),
+
+      setEntryReviewStatus: (criterionType, entryId, status, comment) =>
+        set((state) => {
+          if (!state.review) return state
+          const criterionReview = state.review.criteriaReviews[criterionType]
+          return {
+            review: {
+              ...state.review,
+              criteriaReviews: {
+                ...state.review.criteriaReviews,
+                [criterionType]: {
+                  ...criterionReview,
+                  entryReviews: criterionReview.entryReviews.map((er) =>
+                    er.entryId === entryId
+                      ? { ...er, status, comment, reviewedAt: new Date().toISOString() }
+                      : er
+                  ),
+                },
+              },
+            },
+          }
+        }),
+
       // Utility functions
       getCompletedCriteriaCount: () => {
         const { criteria } = get()
@@ -357,12 +451,45 @@ export const useApplicationStore = create<ApplicationStore>()(
         }
       },
 
+      canProceedToReview: () => {
+        const { getCompletedCriteriaCount } = get()
+        return getCompletedCriteriaCount() >= 3
+      },
+
+      getReviewSummary: () => {
+        const { review } = get()
+        if (!review) {
+          return { approved: 0, rejected: 0, pending: 0, changesRequested: 0 }
+        }
+
+        const counts = { approved: 0, rejected: 0, pending: 0, changesRequested: 0 }
+        Object.values(review.criteriaReviews).forEach((cr) => {
+          switch (cr.status) {
+            case 'approved':
+              counts.approved++
+              break
+            case 'rejected':
+              counts.rejected++
+              break
+            case 'changes_requested':
+              counts.changesRequested++
+              break
+            default:
+              counts.pending++
+          }
+        })
+        return counts
+      },
+
       resetApplication: () =>
         set({
           demographics: null,
           criteria: initialCriteria,
           intake: null,
           recommendations: null,
+          review: null,
+          applicationSubmittedForReview: false,
+          userRole: 'applicant',
         }),
     }),
     {

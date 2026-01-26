@@ -4,11 +4,18 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ProgressBreadcrumb } from '@/components/criteria/ProgressBreadcrumb'
 import { CriteriaGrid } from '@/components/criteria/CriteriaGrid'
+import { Button } from '@/components/ui/Button'
 import { useApplicationStore } from '@/lib/stores/useApplicationStore'
 
 export default function CriteriaPage() {
   const router = useRouter()
-  const { demographics, getCompletedCriteriaCount } = useApplicationStore()
+  const {
+    demographics,
+    getCompletedCriteriaCount,
+    canProceedToReview,
+    submitForReview,
+    applicationSubmittedForReview,
+  } = useApplicationStore()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -31,6 +38,12 @@ export default function CriteriaPage() {
 
   const completedCount = getCompletedCriteriaCount()
   const minimumMet = completedCount >= 3
+  const canSubmit = canProceedToReview() && !applicationSubmittedForReview
+
+  const handleSubmitForReview = () => {
+    submitForReview()
+    router.push('/review')
+  }
 
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
@@ -71,6 +84,26 @@ export default function CriteriaPage() {
               : `Complete ${3 - completedCount} more criteria to meet the minimum requirement.`
             }
           </p>
+
+          {minimumMet && (
+            <div className="mt-4 flex items-center gap-4">
+              {applicationSubmittedForReview ? (
+                <Button
+                  onClick={() => router.push('/review')}
+                  variant="secondary"
+                >
+                  View Review Status
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleSubmitForReview}
+                  disabled={!canSubmit}
+                >
+                  Submit for Review
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         <CriteriaGrid />

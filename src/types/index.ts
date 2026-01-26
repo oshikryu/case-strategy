@@ -268,3 +268,29 @@ export interface RecommendationResult {
   primaryStrengths: string[]
   generatedAt: string
 }
+
+// Review Types
+export type ReviewStatus = 'pending' | 'approved' | 'rejected' | 'changes_requested'
+
+export interface EntryReview {
+  entryId: string
+  status: ReviewStatus
+  comment?: string
+  reviewedAt: string
+}
+
+export interface CriterionReview {
+  criterionType: CriterionType
+  status: ReviewStatus
+  overallComment?: string
+  entryReviews: EntryReview[]
+  reviewedAt?: string
+}
+
+export interface ApplicationReview {
+  criteriaReviews: Record<CriterionType, CriterionReview>
+  submittedAt: string
+  reviewCompletedAt?: string
+}
+
+export type UserRole = 'applicant' | 'reviewer'

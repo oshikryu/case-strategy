@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { useApplicationStore } from '@/lib/stores/useApplicationStore'
 
 export interface ProgressBreadcrumbProps {
   currentStep: 'demographics' | 'recommendations' | 'criteria' | 'review'
@@ -19,6 +20,7 @@ export function ProgressBreadcrumb({
   currentStep,
   completedCriteria,
 }: ProgressBreadcrumbProps) {
+  const { applicationSubmittedForReview } = useApplicationStore()
   const currentIndex = steps.findIndex((s) => s.id === currentStep)
 
   return (
@@ -26,7 +28,11 @@ export function ProgressBreadcrumb({
       {steps.map((step, index) => {
         const isCompleted = index < currentIndex
         const isCurrent = step.id === currentStep
-        const isClickable = index <= currentIndex
+        // Review step is clickable only if submitted for review or if we're past it
+        const isReviewStep = step.id === 'review'
+        const isClickable = isReviewStep
+          ? (applicationSubmittedForReview || index <= currentIndex)
+          : index <= currentIndex
 
         return (
           <div key={step.id} className="flex items-center">
