@@ -8,7 +8,8 @@ import { Modal } from '@/components/ui/Modal'
 import { Button, Input, TextArea, EvidenceInput } from '@/components/ui'
 import { useApplicationStore, generateId } from '@/lib/stores/useApplicationStore'
 import { ContributionEntry, Evidence } from '@/types'
-import { getCriterionDefinition } from '@/lib/constants'
+import { getCriterionDefinition, getLeadingQuestions } from '@/lib/constants'
+import { analyzeContextualRelevance } from '@/lib/services/contextualAnalysis'
 
 const contributionSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -50,6 +51,15 @@ export function ContributionsModal({ open, onOpenChange }: ContributionsModalPro
   } = useForm<ContributionFormData>({
     resolver: zodResolver(contributionSchema),
   })
+
+  const handleAnalyze = (fieldId: string, label: string) => (value: string) => {
+    analyzeContextualRelevance({
+      fieldId,
+      criterionType: 'contributions',
+      content: value,
+      label,
+    })
+  }
 
   const handleEdit = (entry: ContributionEntry) => {
     setEditingEntryId(entry.id)
@@ -212,6 +222,8 @@ export function ContributionsModal({ open, onOpenChange }: ContributionsModalPro
             label="Description"
             placeholder="Describe your contribution in detail..."
             error={errors.description?.message}
+            leadingQuestions={getLeadingQuestions('contributions', 'description')}
+            onAnalyze={handleAnalyze('description', 'Description')}
             {...register('description')}
           />
 
@@ -219,6 +231,8 @@ export function ContributionsModal({ open, onOpenChange }: ContributionsModalPro
             label="Impact"
             placeholder="Describe the impact and significance of this contribution..."
             error={errors.impact?.message}
+            leadingQuestions={getLeadingQuestions('contributions', 'impact')}
+            onAnalyze={handleAnalyze('impact', 'Impact')}
             {...register('impact')}
           />
 
@@ -226,6 +240,8 @@ export function ContributionsModal({ open, onOpenChange }: ContributionsModalPro
             label="Recognition"
             placeholder="How has this contribution been recognized by the field?"
             error={errors.recognition?.message}
+            leadingQuestions={getLeadingQuestions('contributions', 'recognition')}
+            onAnalyze={handleAnalyze('recognition', 'Recognition')}
             {...register('recognition')}
           />
 

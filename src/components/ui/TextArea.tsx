@@ -2,26 +2,51 @@
 
 import { forwardRef, TextareaHTMLAttributes } from 'react'
 import { cn } from '@/lib/utils'
+import { HelpTooltip } from './HelpTooltip'
 
 export interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string
   error?: string
   helperText?: string
+  leadingQuestions?: string[]
+  onAnalyze?: (value: string) => void
 }
 
 export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
-  ({ className, label, error, helperText, id, ...props }, ref) => {
+  ({ className, label, error, helperText, leadingQuestions, onAnalyze, id, onBlur, ...props }, ref) => {
     const textareaId = id || label?.toLowerCase().replace(/\s+/g, '-')
+
+    const handleBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+      const value = e.target.value
+      if (onAnalyze && value.trim()) {
+        onAnalyze(value)
+      }
+      onBlur?.(e)
+    }
 
     return (
       <div className="w-full">
         {label && (
-          <label
-            htmlFor={textareaId}
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            {label}
-          </label>
+          <div className="flex items-center gap-1.5 mb-1">
+            <label
+              htmlFor={textareaId}
+              className="block text-sm font-medium text-gray-700"
+            >
+              {label}
+            </label>
+            {leadingQuestions && leadingQuestions.length > 0 && (
+              <HelpTooltip>
+                <div className="space-y-1">
+                  <p className="font-medium text-gray-200 mb-2">Consider these questions:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    {leadingQuestions.map((question, index) => (
+                      <li key={index} className="text-gray-100">{question}</li>
+                    ))}
+                  </ul>
+                </div>
+              </HelpTooltip>
+            )}
+          </div>
         )}
         <textarea
           ref={ref}
@@ -37,6 +62,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
               : 'border-gray-300',
             className
           )}
+          onBlur={handleBlur}
           {...props}
         />
         {error && <p className="mt-1 text-sm text-red-600">{error}</p>}

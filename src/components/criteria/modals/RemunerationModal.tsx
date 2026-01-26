@@ -8,7 +8,8 @@ import { Modal } from '@/components/ui/Modal'
 import { Button, Input, TextArea, Select, EvidenceInput } from '@/components/ui'
 import { useApplicationStore, generateId } from '@/lib/stores/useApplicationStore'
 import { RemunerationEntry, Evidence } from '@/types'
-import { getCriterionDefinition } from '@/lib/constants'
+import { getCriterionDefinition, getLeadingQuestions } from '@/lib/constants'
+import { analyzeContextualRelevance } from '@/lib/services/contextualAnalysis'
 
 const remunerationSchema = z.object({
   company: z.string().min(1, 'Company name is required'),
@@ -68,6 +69,15 @@ export function RemunerationModal({ open, onOpenChange }: RemunerationModalProps
       currency: 'USD',
     },
   })
+
+  const handleAnalyze = (fieldId: string, label: string) => (value: string) => {
+    analyzeContextualRelevance({
+      fieldId,
+      criterionType: 'remuneration',
+      content: value,
+      label,
+    })
+  }
 
   const handleEdit = (entry: RemunerationEntry) => {
     setEditingEntryId(entry.id)
@@ -286,6 +296,8 @@ export function RemunerationModal({ open, onOpenChange }: RemunerationModalProps
             label="Comparative Data"
             placeholder="Provide evidence that this salary is high compared to others in similar positions (e.g., industry benchmarks, percentile rankings, salary surveys)..."
             error={errors.comparativeData?.message}
+            leadingQuestions={getLeadingQuestions('remuneration', 'comparativeData')}
+            onAnalyze={handleAnalyze('comparativeData', 'Comparative Data')}
             {...register('comparativeData')}
           />
 

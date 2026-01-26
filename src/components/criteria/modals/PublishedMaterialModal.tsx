@@ -8,7 +8,8 @@ import { Modal } from '@/components/ui/Modal'
 import { Button, Input, TextArea, EvidenceInput } from '@/components/ui'
 import { useApplicationStore, generateId } from '@/lib/stores/useApplicationStore'
 import { PublishedMaterialEntry, Evidence } from '@/types'
-import { getCriterionDefinition } from '@/lib/constants'
+import { getCriterionDefinition, getLeadingQuestions } from '@/lib/constants'
+import { analyzeContextualRelevance } from '@/lib/services/contextualAnalysis'
 
 const publishedMaterialSchema = z.object({
   publication: z.string().min(1, 'Publication name is required'),
@@ -50,6 +51,15 @@ export function PublishedMaterialModal({ open, onOpenChange }: PublishedMaterial
   } = useForm<PublishedMaterialFormData>({
     resolver: zodResolver(publishedMaterialSchema),
   })
+
+  const handleAnalyze = (fieldId: string, label: string) => (value: string) => {
+    analyzeContextualRelevance({
+      fieldId,
+      criterionType: 'publishedMaterial',
+      content: value,
+      label,
+    })
+  }
 
   const handleEdit = (entry: PublishedMaterialEntry) => {
     setEditingEntryId(entry.id)
@@ -232,6 +242,8 @@ export function PublishedMaterialModal({ open, onOpenChange }: PublishedMaterial
             label="Circulation/Reach"
             placeholder="Describe the publication's circulation, readership, or reach..."
             error={errors.circulation?.message}
+            leadingQuestions={getLeadingQuestions('publishedMaterial', 'circulation')}
+            onAnalyze={handleAnalyze('circulation', 'Circulation/Reach')}
             {...register('circulation')}
           />
 

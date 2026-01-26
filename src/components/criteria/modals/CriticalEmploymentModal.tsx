@@ -8,7 +8,8 @@ import { Modal } from '@/components/ui/Modal'
 import { Button, Input, TextArea, EvidenceInput } from '@/components/ui'
 import { useApplicationStore, generateId } from '@/lib/stores/useApplicationStore'
 import { CriticalEmploymentEntry, Evidence } from '@/types'
-import { getCriterionDefinition } from '@/lib/constants'
+import { getCriterionDefinition, getLeadingQuestions } from '@/lib/constants'
+import { analyzeContextualRelevance } from '@/lib/services/contextualAnalysis'
 
 const criticalEmploymentSchema = z.object({
   company: z.string().min(1, 'Company name is required'),
@@ -51,6 +52,15 @@ export function CriticalEmploymentModal({ open, onOpenChange }: CriticalEmployme
   } = useForm<CriticalEmploymentFormData>({
     resolver: zodResolver(criticalEmploymentSchema),
   })
+
+  const handleAnalyze = (fieldId: string, label: string) => (value: string) => {
+    analyzeContextualRelevance({
+      fieldId,
+      criterionType: 'criticalEmployment',
+      content: value,
+      label,
+    })
+  }
 
   const handleEdit = (entry: CriticalEmploymentEntry) => {
     setEditingEntryId(entry.id)
@@ -233,6 +243,8 @@ export function CriticalEmploymentModal({ open, onOpenChange }: CriticalEmployme
             label="Key Responsibilities"
             placeholder="Describe your main responsibilities and scope..."
             error={errors.responsibilities?.message}
+            leadingQuestions={getLeadingQuestions('criticalEmployment', 'responsibilities')}
+            onAnalyze={handleAnalyze('responsibilities', 'Key Responsibilities')}
             {...register('responsibilities')}
           />
 
@@ -240,6 +252,8 @@ export function CriticalEmploymentModal({ open, onOpenChange }: CriticalEmployme
             label="Critical Nature of Role"
             placeholder="Explain why this role is critical/essential to the organization..."
             error={errors.criticalNature?.message}
+            leadingQuestions={getLeadingQuestions('criticalEmployment', 'criticalNature')}
+            onAnalyze={handleAnalyze('criticalNature', 'Critical Nature of Role')}
             {...register('criticalNature')}
           />
 

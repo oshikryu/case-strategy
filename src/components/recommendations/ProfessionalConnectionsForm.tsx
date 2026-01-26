@@ -8,6 +8,8 @@ import { Button, Input, Select, TextArea } from '@/components/ui'
 import { useApplicationStore, generateId } from '@/lib/stores/useApplicationStore'
 import { ProfessionalConnectionEntry } from '@/types'
 import { cn } from '@/lib/utils'
+import { getLeadingQuestions } from '@/lib/constants'
+import { analyzeContextualRelevance } from '@/lib/services/contextualAnalysis'
 
 const professionalConnectionSchema = z.object({
   relationship: z.enum(['colleague', 'mentor', 'supervisor', 'collaborator', 'client', 'other']),
@@ -69,6 +71,15 @@ export function ProfessionalConnectionsForm({ onNext, onBack }: ProfessionalConn
       canProvideReference: false,
     },
   })
+
+  const handleAnalyze = (fieldId: string, label: string) => (value: string) => {
+    analyzeContextualRelevance({
+      fieldId,
+      criterionType: 'professionalConnections',
+      content: value,
+      label,
+    })
+  }
 
   const handleEdit = (entry: ProfessionalConnectionEntry) => {
     setEditingEntryId(entry.id)
@@ -226,6 +237,8 @@ export function ProfessionalConnectionsForm({ onNext, onBack }: ProfessionalConn
               label="Professional Achievements (Optional)"
               placeholder="Awards, publications, leadership positions, notable accomplishments..."
               helperText="Helps identify their credibility as a reference"
+              leadingQuestions={getLeadingQuestions('professionalConnections', 'professionalAchievements')}
+              onAnalyze={handleAnalyze('professionalAchievements', 'Professional Achievements')}
               {...register('professionalAchievements')}
             />
 
@@ -233,6 +246,8 @@ export function ProfessionalConnectionsForm({ onNext, onBack }: ProfessionalConn
               label="Field Relevance (Optional)"
               placeholder="How does their expertise relate to your field?"
               helperText="Experts in your field can provide stronger letters"
+              leadingQuestions={getLeadingQuestions('professionalConnections', 'fieldRelevance')}
+              onAnalyze={handleAnalyze('fieldRelevance', 'Field Relevance')}
               {...register('fieldRelevance')}
             />
 

@@ -8,7 +8,8 @@ import { Modal } from '@/components/ui/Modal'
 import { Button, Input, TextArea, EvidenceInput } from '@/components/ui'
 import { useApplicationStore, generateId } from '@/lib/stores/useApplicationStore'
 import { JudgingEntry, Evidence } from '@/types'
-import { getCriterionDefinition } from '@/lib/constants'
+import { getCriterionDefinition, getLeadingQuestions } from '@/lib/constants'
+import { analyzeContextualRelevance } from '@/lib/services/contextualAnalysis'
 
 const judgingSchema = z.object({
   organization: z.string().min(1, 'Organization is required'),
@@ -51,6 +52,15 @@ export function JudgingModal({ open, onOpenChange }: JudgingModalProps) {
   } = useForm<JudgingFormData>({
     resolver: zodResolver(judgingSchema),
   })
+
+  const handleAnalyze = (fieldId: string, label: string) => (value: string) => {
+    analyzeContextualRelevance({
+      fieldId,
+      criterionType: 'judging',
+      content: value,
+      label,
+    })
+  }
 
   const handleEdit = (entry: JudgingEntry) => {
     setEditingEntryId(entry.id)
@@ -241,6 +251,8 @@ export function JudgingModal({ open, onOpenChange }: JudgingModalProps) {
             label="Context"
             placeholder="Describe the nature of the judging work and its significance..."
             error={errors.context?.message}
+            leadingQuestions={getLeadingQuestions('judging', 'context')}
+            onAnalyze={handleAnalyze('context', 'Context')}
             {...register('context')}
           />
 

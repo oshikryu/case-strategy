@@ -8,7 +8,8 @@ import { Modal } from '@/components/ui/Modal'
 import { Button, Input, TextArea, Select, EvidenceInput } from '@/components/ui'
 import { useApplicationStore, generateId } from '@/lib/stores/useApplicationStore'
 import { AwardEntry, Evidence } from '@/types'
-import { getCriterionDefinition } from '@/lib/constants'
+import { getCriterionDefinition, getLeadingQuestions } from '@/lib/constants'
+import { analyzeContextualRelevance } from '@/lib/services/contextualAnalysis'
 
 const awardSchema = z.object({
   name: z.string().min(1, 'Award name is required'),
@@ -68,6 +69,15 @@ export function AwardsModal({ open, onOpenChange }: AwardsModalProps) {
       significance: '',
     },
   })
+
+  const handleAnalyze = (fieldId: string, label: string) => (value: string) => {
+    analyzeContextualRelevance({
+      fieldId,
+      criterionType: 'awards',
+      content: value,
+      label,
+    })
+  }
 
   const handleEdit = (entry: AwardEntry) => {
     setEditingEntryId(entry.id)
@@ -249,6 +259,8 @@ export function AwardsModal({ open, onOpenChange }: AwardsModalProps) {
             label="Description"
             placeholder="Describe the award and why you received it..."
             error={errors.description?.message}
+            leadingQuestions={getLeadingQuestions('awards', 'description')}
+            onAnalyze={handleAnalyze('description', 'Description')}
             {...register('description')}
           />
 
@@ -256,6 +268,8 @@ export function AwardsModal({ open, onOpenChange }: AwardsModalProps) {
             label="Significance"
             placeholder="Explain why this award demonstrates extraordinary ability..."
             error={errors.significance?.message}
+            leadingQuestions={getLeadingQuestions('awards', 'significance')}
+            onAnalyze={handleAnalyze('significance', 'Significance')}
             {...register('significance')}
           />
 

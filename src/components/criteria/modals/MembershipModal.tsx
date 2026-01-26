@@ -8,7 +8,8 @@ import { Modal } from '@/components/ui/Modal'
 import { Button, Input, TextArea, Select, EvidenceInput } from '@/components/ui'
 import { useApplicationStore, generateId } from '@/lib/stores/useApplicationStore'
 import { MembershipEntry, Evidence } from '@/types'
-import { getCriterionDefinition } from '@/lib/constants'
+import { getCriterionDefinition, getLeadingQuestions } from '@/lib/constants'
+import { analyzeContextualRelevance } from '@/lib/services/contextualAnalysis'
 
 const membershipSchema = z.object({
   organization: z.string().min(1, 'Organization is required'),
@@ -57,6 +58,15 @@ export function MembershipModal({ open, onOpenChange }: MembershipModalProps) {
   } = useForm<MembershipFormData>({
     resolver: zodResolver(membershipSchema),
   })
+
+  const handleAnalyze = (fieldId: string, label: string) => (value: string) => {
+    analyzeContextualRelevance({
+      fieldId,
+      criterionType: 'membership',
+      content: value,
+      label,
+    })
+  }
 
   const handleEdit = (entry: MembershipEntry) => {
     setEditingEntryId(entry.id)
@@ -212,6 +222,8 @@ export function MembershipModal({ open, onOpenChange }: MembershipModalProps) {
             label="Membership Requirements"
             placeholder="What are the requirements to join this organization?"
             error={errors.requirements?.message}
+            leadingQuestions={getLeadingQuestions('membership', 'requirements')}
+            onAnalyze={handleAnalyze('requirements', 'Membership Requirements')}
             {...register('requirements')}
           />
 
@@ -234,6 +246,8 @@ export function MembershipModal({ open, onOpenChange }: MembershipModalProps) {
             label="Achievements within Organization"
             placeholder="Describe your achievements and contributions..."
             error={errors.achievements?.message}
+            leadingQuestions={getLeadingQuestions('membership', 'achievements')}
+            onAnalyze={handleAnalyze('achievements', 'Achievements within Organization')}
             {...register('achievements')}
           />
 

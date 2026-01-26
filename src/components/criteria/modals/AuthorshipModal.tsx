@@ -8,7 +8,8 @@ import { Modal } from '@/components/ui/Modal'
 import { Button, Input, TextArea, EvidenceInput } from '@/components/ui'
 import { useApplicationStore, generateId } from '@/lib/stores/useApplicationStore'
 import { AuthorshipEntry, Evidence } from '@/types'
-import { getCriterionDefinition } from '@/lib/constants'
+import { getCriterionDefinition, getLeadingQuestions } from '@/lib/constants'
+import { analyzeContextualRelevance } from '@/lib/services/contextualAnalysis'
 
 const authorshipSchema = z.object({
   title: z.string().min(1, 'Article title is required'),
@@ -51,6 +52,15 @@ export function AuthorshipModal({ open, onOpenChange }: AuthorshipModalProps) {
   } = useForm<AuthorshipFormData>({
     resolver: zodResolver(authorshipSchema),
   })
+
+  const handleAnalyze = (fieldId: string, label: string) => (value: string) => {
+    analyzeContextualRelevance({
+      fieldId,
+      criterionType: 'authorship',
+      content: value,
+      label,
+    })
+  }
 
   const handleEdit = (entry: AuthorshipEntry) => {
     setEditingEntryId(entry.id)
@@ -230,6 +240,8 @@ export function AuthorshipModal({ open, onOpenChange }: AuthorshipModalProps) {
             label="Co-authors (Optional)"
             placeholder="List co-authors, one per line..."
             error={errors.coauthors?.message}
+            leadingQuestions={getLeadingQuestions('authorship', 'coauthors')}
+            onAnalyze={handleAnalyze('coauthors', 'Co-authors')}
             {...register('coauthors')}
           />
 
