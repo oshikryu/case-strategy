@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import { CriteriaCard } from './CriteriaCard'
-import { criteriaDefinitions, CriterionDefinition } from '@/lib/constants'
+import { criteriaDefinitions } from '@/lib/constants'
 import { useApplicationStore } from '@/lib/stores/useApplicationStore'
 import { CriterionType } from '@/types'
+import { getRecommendationScore } from '@/lib/utils'
 
 // Import all modals
 import { AwardsModal } from './modals/AwardsModal'
@@ -28,7 +29,7 @@ const modalComponents: Record<CriterionType, React.ComponentType<{ open: boolean
 }
 
 export function CriteriaGrid() {
-  const { criteria } = useApplicationStore()
+  const { criteria, recommendations } = useApplicationStore()
   const [openModal, setOpenModal] = useState<CriterionType | null>(null)
 
   const handleCardClick = (criterionId: CriterionType) => {
@@ -53,6 +54,7 @@ export function CriteriaGrid() {
             criterion={criterion}
             state={criteria[criterion.id]}
             onClick={() => handleCardClick(criterion.id)}
+            recommendationScore={getRecommendationScore(recommendations, criterion.id)}
           />
         ))}
       </div>

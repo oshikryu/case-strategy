@@ -8,10 +8,12 @@ export interface CriteriaCardProps {
   criterion: CriterionDefinition
   state: CriterionState
   onClick: () => void
+  recommendationScore?: number
 }
 
-export function CriteriaCard({ criterion, state, onClick }: CriteriaCardProps) {
+export function CriteriaCard({ criterion, state, onClick, recommendationScore }: CriteriaCardProps) {
   const { entries, isComplete, isDraft } = state
+  const isRecommended = recommendationScore !== undefined && recommendationScore >= 30
 
   const getStatusBadge = () => {
     if (isComplete) {
@@ -65,35 +67,49 @@ export function CriteriaCard({ criterion, state, onClick }: CriteriaCardProps) {
     <button
       onClick={onClick}
       className={cn(
-        'w-full text-left p-5 rounded-xl border-2 transition-all duration-200',
+        'w-full text-left p-5 rounded-xl border-2 transition-all duration-200 relative',
         'hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
         isComplete
           ? 'border-green-200 bg-green-50 hover:border-green-300'
           : isDraft || entries.length > 0
           ? 'border-yellow-200 bg-yellow-50 hover:border-yellow-300'
+          : isRecommended
+          ? 'border-blue-300 bg-blue-50 hover:border-blue-400'
           : 'border-gray-200 bg-white hover:border-blue-300'
       )}
     >
+      {isRecommended && !isComplete && entries.length === 0 && (
+        <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-medium px-2 py-0.5 rounded-full">
+          Recommended
+        </div>
+      )}
       <div className="flex items-start justify-between mb-2">
         <h3 className="text-lg font-semibold text-gray-900">{criterion.title}</h3>
         {getStatusBadge()}
       </div>
       <p className="text-sm text-gray-600 mb-3">{criterion.shortDescription}</p>
-      <div className="flex items-center text-xs text-gray-500">
-        <span>Click to {entries.length > 0 ? 'edit' : 'add'} evidence</span>
-        <svg
-          className="w-4 h-4 ml-1"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center text-xs text-gray-500">
+          <span>Click to {entries.length > 0 ? 'edit' : 'add'} evidence</span>
+          <svg
+            className="w-4 h-4 ml-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </div>
+        {isRecommended && (
+          <span className="text-xs text-blue-600 font-medium">
+            Match: {recommendationScore}%
+          </span>
+        )}
       </div>
     </button>
   )

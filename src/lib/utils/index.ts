@@ -1,3 +1,4 @@
 export * from './cn'
 export * from './storage'
 export * from './imageHelpers'
+export * from './recommendationEngine'

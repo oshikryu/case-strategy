@@ -58,7 +58,7 @@ export function DemographicForm() {
 
   const onSubmit = (data: DemographicsFormData) => {
     setDemographics(data)
-    router.push('/criteria')
+    router.push('/recommendations')
   }
 
   return (
@@ -176,7 +176,7 @@ export function DemographicForm() {
           className="w-full"
           isLoading={isSubmitting}
         >
-          Continue to Criteria Selection
+          Continue
         </Button>
       </div>
     </form>

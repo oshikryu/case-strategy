@@ -205,3 +205,66 @@ export interface ApplicationState {
   demographics: Demographics | null
   criteria: Record<CriterionType, CriterionState>
 }
+
+// Employment History
+export interface EmploymentHistoryEntry {
+  id: string
+  company: string
+  role: string
+  industry: string
+  startDate: string
+  endDate?: string
+  isCurrentRole: boolean
+  responsibilities: string
+  achievements?: string
+  employeeCount?: 'small' | 'medium' | 'large' | 'enterprise'
+  companyReputation?: 'startup' | 'established' | 'industry-leader' | 'fortune500'
+}
+
+// Education History
+export interface EducationHistoryEntry {
+  id: string
+  institution: string
+  degree: 'bachelors' | 'masters' | 'doctorate' | 'professional' | 'other'
+  fieldOfStudy: string
+  graduationYear: number
+  honors?: string
+  publications?: number
+  researchFocus?: string
+  advisorNotable?: boolean
+}
+
+// Family Connections (Professional Network Focus)
+export interface FamilyConnectionEntry {
+  id: string
+  relationship: 'spouse' | 'parent' | 'sibling' | 'child' | 'other'
+  name: string
+  occupation?: string
+  industry?: string
+  professionalAchievements?: string
+  canProvideReference: boolean
+  fieldRelevance?: string
+}
+
+// Intake Data
+export interface IntakeData {
+  wantsRecommendations: boolean
+  employmentHistory: EmploymentHistoryEntry[]
+  educationHistory: EducationHistoryEntry[]
+  familyConnections: FamilyConnectionEntry[]
+  completedAt?: string
+}
+
+// Recommendation Result
+export interface CriterionRecommendation {
+  criterionType: CriterionType
+  score: number // 0-100
+  reasoning: string
+  suggestedEvidence: string[]
+}
+
+export interface RecommendationResult {
+  recommendedCriteria: CriterionRecommendation[]
+  primaryStrengths: string[]
+  generatedAt: string
+}

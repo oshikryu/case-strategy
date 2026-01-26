@@ -13,6 +13,11 @@ import {
   AuthorshipEntry,
   CriticalEmploymentEntry,
   RemunerationEntry,
+  IntakeData,
+  RecommendationResult,
+  EmploymentHistoryEntry,
+  EducationHistoryEntry,
+  FamilyConnectionEntry,
 } from '@/types'
 
 const initialCriterionState: CriterionState = {
@@ -35,6 +40,8 @@ const initialCriteria: Record<CriterionType, CriterionState> = {
 interface ApplicationStore {
   demographics: Demographics | null
   criteria: Record<CriterionType, CriterionState>
+  intake: IntakeData | null
+  recommendations: RecommendationResult | null
 
   // Demographics actions
   setDemographics: (demographics: Demographics) => void
@@ -48,10 +55,31 @@ interface ApplicationStore {
   setCriterionComplete: (criterionType: CriterionType, isComplete: boolean) => void
   setCriterionDraft: (criterionType: CriterionType, isDraft: boolean) => void
 
+  // Intake/Recommendations actions
+  setIntake: (intake: IntakeData) => void
+  addEmploymentEntry: (entry: EmploymentHistoryEntry) => void
+  updateEmploymentEntry: (id: string, updates: Partial<EmploymentHistoryEntry>) => void
+  removeEmploymentEntry: (id: string) => void
+  addEducationEntry: (entry: EducationHistoryEntry) => void
+  updateEducationEntry: (id: string, updates: Partial<EducationHistoryEntry>) => void
+  removeEducationEntry: (id: string) => void
+  addFamilyConnection: (entry: FamilyConnectionEntry) => void
+  updateFamilyConnection: (id: string, updates: Partial<FamilyConnectionEntry>) => void
+  removeFamilyConnection: (id: string) => void
+  skipRecommendations: () => void
+  setRecommendations: (recommendations: RecommendationResult) => void
+
   // Utility functions
   getCompletedCriteriaCount: () => number
   getCriterionEntries: <T extends CriterionEntry>(criterionType: CriterionType) => T[]
   resetApplication: () => void
+}
+
+const initialIntake: IntakeData = {
+  wantsRecommendations: false,
+  employmentHistory: [],
+  educationHistory: [],
+  familyConnections: [],
 }
 
 export const useApplicationStore = create<ApplicationStore>()(
@@ -59,6 +87,8 @@ export const useApplicationStore = create<ApplicationStore>()(
     (set, get) => ({
       demographics: null,
       criteria: initialCriteria,
+      intake: null,
+      recommendations: null,
 
       // Demographics actions
       setDemographics: (demographics) => set({ demographics }),
@@ -138,6 +168,131 @@ export const useApplicationStore = create<ApplicationStore>()(
           },
         })),
 
+      // Intake/Recommendations actions
+      setIntake: (intake) => set({ intake }),
+
+      addEmploymentEntry: (entry) =>
+        set((state) => ({
+          intake: state.intake
+            ? {
+                ...state.intake,
+                employmentHistory: [...state.intake.employmentHistory, entry],
+              }
+            : {
+                ...initialIntake,
+                wantsRecommendations: true,
+                employmentHistory: [entry],
+              },
+        })),
+
+      updateEmploymentEntry: (id, updates) =>
+        set((state) => ({
+          intake: state.intake
+            ? {
+                ...state.intake,
+                employmentHistory: state.intake.employmentHistory.map((entry) =>
+                  entry.id === id ? { ...entry, ...updates } : entry
+                ),
+              }
+            : null,
+        })),
+
+      removeEmploymentEntry: (id) =>
+        set((state) => ({
+          intake: state.intake
+            ? {
+                ...state.intake,
+                employmentHistory: state.intake.employmentHistory.filter(
+                  (entry) => entry.id !== id
+                ),
+              }
+            : null,
+        })),
+
+      addEducationEntry: (entry) =>
+        set((state) => ({
+          intake: state.intake
+            ? {
+                ...state.intake,
+                educationHistory: [...state.intake.educationHistory, entry],
+              }
+            : {
+                ...initialIntake,
+                wantsRecommendations: true,
+                educationHistory: [entry],
+              },
+        })),
+
+      updateEducationEntry: (id, updates) =>
+        set((state) => ({
+          intake: state.intake
+            ? {
+                ...state.intake,
+                educationHistory: state.intake.educationHistory.map((entry) =>
+                  entry.id === id ? { ...entry, ...updates } : entry
+                ),
+              }
+            : null,
+        })),
+
+      removeEducationEntry: (id) =>
+        set((state) => ({
+          intake: state.intake
+            ? {
+                ...state.intake,
+                educationHistory: state.intake.educationHistory.filter(
+                  (entry) => entry.id !== id
+                ),
+              }
+            : null,
+        })),
+
+      addFamilyConnection: (entry) =>
+        set((state) => ({
+          intake: state.intake
+            ? {
+                ...state.intake,
+                familyConnections: [...state.intake.familyConnections, entry],
+              }
+            : {
+                ...initialIntake,
+                wantsRecommendations: true,
+                familyConnections: [entry],
+              },
+        })),
+
+      updateFamilyConnection: (id, updates) =>
+        set((state) => ({
+          intake: state.intake
+            ? {
+                ...state.intake,
+                familyConnections: state.intake.familyConnections.map((entry) =>
+                  entry.id === id ? { ...entry, ...updates } : entry
+                ),
+              }
+            : null,
+        })),
+
+      removeFamilyConnection: (id) =>
+        set((state) => ({
+          intake: state.intake
+            ? {
+                ...state.intake,
+                familyConnections: state.intake.familyConnections.filter(
+                  (entry) => entry.id !== id
+                ),
+              }
+            : null,
+        })),
+
+      skipRecommendations: () =>
+        set({
+          intake: { ...initialIntake, wantsRecommendations: false },
+          recommendations: null,
+        }),
+
+      setRecommendations: (recommendations) => set({ recommendations }),
+
       // Utility functions
       getCompletedCriteriaCount: () => {
         const { criteria } = get()
@@ -153,6 +308,8 @@ export const useApplicationStore = create<ApplicationStore>()(
         set({
           demographics: null,
           criteria: initialCriteria,
+          intake: null,
+          recommendations: null,
         }),
     }),
     {
@@ -163,7 +320,7 @@ export const useApplicationStore = create<ApplicationStore>()(
 
 // Helper function to generate unique IDs
 export const generateId = (): string => {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
 }
 
 // Type guards for criterion entries

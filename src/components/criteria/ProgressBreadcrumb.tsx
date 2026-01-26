@@ -4,12 +4,13 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 export interface ProgressBreadcrumbProps {
-  currentStep: 'demographics' | 'criteria' | 'review'
+  currentStep: 'demographics' | 'recommendations' | 'criteria' | 'review'
   completedCriteria: number
 }
 
 const steps = [
   { id: 'demographics', label: 'Demographics', href: '/' },
+  { id: 'recommendations', label: 'Recommendations', href: '/recommendations' },
   { id: 'criteria', label: 'Criteria', href: '/criteria' },
   { id: 'review', label: 'Review', href: '/review' },
 ]
