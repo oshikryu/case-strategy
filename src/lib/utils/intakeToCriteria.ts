@@ -45,6 +45,7 @@ export function generateCriteriaFromIntake(intake: IntakeData): GeneratedCriteri
         id: generateId(),
         company: emp.company,
         position: emp.role,
+        workLocation: '', // User needs to fill this in
         salary: 0, // User needs to fill this in
         currency: 'USD',
         year: emp.endDate ? parseInt(emp.endDate.split('-')[0]) : new Date().getFullYear(),

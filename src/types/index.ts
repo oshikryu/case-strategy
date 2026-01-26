@@ -168,11 +168,13 @@ export interface RemunerationEntry {
   id: string
   company: string
   position: string
+  workLocation: string
   salary: number
   currency: string
   year: number
   comparativeData: string
-  evidence?: Evidence
+  paystubs?: Evidence
+  equityProof?: Evidence
 }
 
 export type CriterionEntry =

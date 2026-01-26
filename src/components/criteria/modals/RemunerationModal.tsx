@@ -13,6 +13,7 @@ import { getCriterionDefinition } from '@/lib/constants'
 const remunerationSchema = z.object({
   company: z.string().min(1, 'Company name is required'),
   position: z.string().min(1, 'Position is required'),
+  workLocation: z.string().min(1, 'Work location is required'),
   salary: z.coerce.number().min(1, 'Salary is required'),
   currency: z.string().min(1, 'Currency is required'),
   year: z.coerce.number().min(1900, 'Year is required').max(2100, 'Invalid year'),
@@ -43,7 +44,8 @@ export function RemunerationModal({ open, onOpenChange }: RemunerationModalProps
   const { criteria, addEntry, updateEntry, removeEntry, setCriterionComplete, setCriterionDraft } = useApplicationStore()
   const entries = criteria.remuneration.entries as RemunerationEntry[]
   const criterion = getCriterionDefinition('remuneration')!
-  const [evidence, setEvidence] = useState<Evidence>(emptyEvidence)
+  const [paystubs, setPaystubs] = useState<Evidence>(emptyEvidence)
+  const [equityProof, setEquityProof] = useState<Evidence>(emptyEvidence)
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
 
@@ -71,38 +73,45 @@ export function RemunerationModal({ open, onOpenChange }: RemunerationModalProps
     setEditingEntryId(entry.id)
     setValue('company', entry.company)
     setValue('position', entry.position)
+    setValue('workLocation', entry.workLocation)
     setValue('salary', entry.salary)
     setValue('currency', entry.currency)
     setValue('year', entry.year)
     setValue('comparativeData', entry.comparativeData)
-    setEvidence(entry.evidence || emptyEvidence)
+    setPaystubs(entry.paystubs || emptyEvidence)
+    setEquityProof(entry.equityProof || emptyEvidence)
   }
 
   const handleCancelEdit = () => {
     setEditingEntryId(null)
     reset()
-    setEvidence(emptyEvidence)
+    setPaystubs(emptyEvidence)
+    setEquityProof(emptyEvidence)
   }
 
   const onAddEntry = (data: RemunerationFormData) => {
-    const entryEvidence = evidence.files.length > 0 || evidence.urls.length > 0 ? evidence : undefined
+    const entryPaystubs = paystubs.files.length > 0 || paystubs.urls.length > 0 ? paystubs : undefined
+    const entryEquityProof = equityProof.files.length > 0 || equityProof.urls.length > 0 ? equityProof : undefined
 
     if (editingEntryId) {
       updateEntry('remuneration', editingEntryId, {
         ...data,
-        evidence: entryEvidence,
+        paystubs: entryPaystubs,
+        equityProof: entryEquityProof,
       })
       setEditingEntryId(null)
     } else {
       const entry: RemunerationEntry = {
         id: generateId(),
         ...data,
-        evidence: entryEvidence,
+        paystubs: entryPaystubs,
+        equityProof: entryEquityProof,
       }
       addEntry('remuneration', entry)
     }
     reset()
-    setEvidence(emptyEvidence)
+    setPaystubs(emptyEvidence)
+    setEquityProof(emptyEvidence)
   }
 
   const handleRemoveEntry = (id: string) => {
@@ -129,8 +138,14 @@ export function RemunerationModal({ open, onOpenChange }: RemunerationModalProps
   }
 
   const getEvidenceCount = (entry: RemunerationEntry) => {
-    if (!entry.evidence) return 0
-    return entry.evidence.files.length + entry.evidence.urls.length
+    let count = 0
+    if (entry.paystubs) {
+      count += entry.paystubs.files.length + entry.paystubs.urls.length
+    }
+    if (entry.equityProof) {
+      count += entry.equityProof.files.length + entry.equityProof.urls.length
+    }
+    return count
   }
 
   return (
@@ -234,6 +249,13 @@ export function RemunerationModal({ open, onOpenChange }: RemunerationModalProps
             {...register('position')}
           />
 
+          <Input
+            label="Work Location"
+            placeholder="e.g., San Francisco, CA, USA"
+            error={errors.workLocation?.message}
+            {...register('workLocation')}
+          />
+
           <div className="grid grid-cols-3 gap-4">
             <div className="col-span-2">
               <Input
@@ -268,9 +290,17 @@ export function RemunerationModal({ open, onOpenChange }: RemunerationModalProps
           />
 
           <EvidenceInput
-            value={evidence}
-            onChange={setEvidence}
-            helperText="Upload pay stubs, offer letters, tax documents, or links to salary surveys/benchmarks"
+            label="Paystubs / Salary Documentation"
+            value={paystubs}
+            onChange={setPaystubs}
+            helperText="Upload pay stubs, offer letters, or tax documents showing compensation"
+          />
+
+          <EvidenceInput
+            label="Equity / Stock Documentation (Optional)"
+            value={equityProof}
+            onChange={setEquityProof}
+            helperText="Upload equity grant letters, stock option documents, or vesting schedules"
           />
 
           <Button type="submit" variant="secondary" className="w-full">

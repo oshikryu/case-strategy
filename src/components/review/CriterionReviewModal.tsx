@@ -150,12 +150,16 @@ export function CriterionReviewModal({
 
     if ('salary' in entry && 'comparativeData' in entry) {
       // RemunerationEntry
+      const remuneration = entry as { position: string; company: string; workLocation: string; currency: string; salary: number; year: number }
       return (
         <div>
-          <h4 className="font-medium text-gray-900">{entry.position}</h4>
-          <p className="text-sm text-gray-600">{entry.company}</p>
+          <h4 className="font-medium text-gray-900">{remuneration.position}</h4>
+          <p className="text-sm text-gray-600">{remuneration.company}</p>
+          {remuneration.workLocation && (
+            <p className="text-xs text-gray-500">{remuneration.workLocation}</p>
+          )}
           <p className="text-xs text-gray-500 mt-1">
-            {entry.currency} {entry.salary.toLocaleString()} ({entry.year})
+            {remuneration.currency} {remuneration.salary.toLocaleString()} ({remuneration.year})
           </p>
         </div>
       )

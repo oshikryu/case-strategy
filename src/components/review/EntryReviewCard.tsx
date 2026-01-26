@@ -1,10 +1,36 @@
 'use client'
 
-import { CriterionEntry, EntryReview, ReviewStatus } from '@/types'
+import { CriterionEntry, EntryReview, ReviewStatus, RemunerationEntry, Evidence } from '@/types'
 import { ReviewStatusBadge } from './ReviewStatusBadge'
 import { ReviewActionButtons } from './ReviewActionButtons'
 import { ReviewCommentInput } from './ReviewCommentInput'
 import { useState } from 'react'
+
+// Helper to check if entry is a RemunerationEntry
+function isRemunerationEntry(entry: CriterionEntry): entry is RemunerationEntry {
+  return 'paystubs' in entry || 'equityProof' in entry || 'workLocation' in entry
+}
+
+// Helper to get all evidence from an entry (handles both regular entries and RemunerationEntry)
+function getEntryEvidence(entry: CriterionEntry): Evidence | null {
+  if (isRemunerationEntry(entry)) {
+    // Combine paystubs and equityProof for display
+    const files = [
+      ...(entry.paystubs?.files || []),
+      ...(entry.equityProof?.files || []),
+    ]
+    const urls = [
+      ...(entry.paystubs?.urls || []),
+      ...(entry.equityProof?.urls || []),
+    ]
+    if (files.length > 0 || urls.length > 0) {
+      return { files, urls }
+    }
+    return null
+  }
+  // Regular entries have an 'evidence' field
+  return (entry as { evidence?: Evidence }).evidence || null
+}
 
 interface EntryReviewCardProps {
   entry: CriterionEntry
@@ -43,31 +69,37 @@ export function EntryReviewCard({
         )}
       </div>
 
-      {entry.evidence && (entry.evidence.files.length > 0 || entry.evidence.urls.length > 0) && (
-        <div className="mt-3 pt-3 border-t border-gray-200">
-          <p className="text-xs font-medium text-gray-500 mb-2">Evidence:</p>
-          <div className="space-y-1">
-            {entry.evidence.files.map((file) => (
-              <div key={file.id} className="text-xs text-gray-600 flex items-center gap-1">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                {file.name}
-              </div>
-            ))}
-            {entry.evidence.urls.map((url) => (
-              <div key={url.id} className="text-xs text-blue-600 flex items-center gap-1">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                </svg>
-                <a href={url.url} target="_blank" rel="noopener noreferrer" className="hover:underline truncate">
-                  {url.description || url.url}
-                </a>
-              </div>
-            ))}
+      {(() => {
+        const evidence = getEntryEvidence(entry)
+        if (!evidence || (evidence.files.length === 0 && evidence.urls.length === 0)) {
+          return null
+        }
+        return (
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <p className="text-xs font-medium text-gray-500 mb-2">Evidence:</p>
+            <div className="space-y-1">
+              {evidence.files.map((file) => (
+                <div key={file.id} className="text-xs text-gray-600 flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  {file.name}
+                </div>
+              ))}
+              {evidence.urls.map((url) => (
+                <div key={url.id} className="text-xs text-blue-600 flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                  <a href={url.url} target="_blank" rel="noopener noreferrer" className="hover:underline truncate">
+                    {url.description || url.url}
+                  </a>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {isReviewer ? (
         <div className="mt-4 pt-4 border-t border-gray-200 space-y-3">
